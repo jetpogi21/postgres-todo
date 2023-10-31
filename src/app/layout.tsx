@@ -10,7 +10,6 @@ import Sidebar from "@/components/sidebar/Sidebar";
 import DarkLightToggle from "@/components/header/DarkLightToggle";
 import { GlobalDialog } from "@/components/GlobalDialog";
 
-
 const inter = Roboto_Flex({
   subsets: ["latin"],
   display: "swap",
@@ -41,7 +40,7 @@ export default function RootLayout({
             <Sidebar />
             <main className="flex flex-col flex-1 gap-4 pt-4 pl-0 pr-4">
               <div className="flex self-end gap-4">
-                <SessionButton />
+                {/* <SessionButton /> */}
                 <DarkLightToggle />
               </div>
               {children}
