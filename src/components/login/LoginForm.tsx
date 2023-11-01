@@ -2,7 +2,6 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { Form, Formik, FormikHelpers } from "formik";
-import { signIn } from "next-auth/react";
 import loginSchema from "@/schema/login";
 import { Icons } from "@/components/Icons";
 import { FormikInput } from "@/components/formik/FormikInput";
@@ -11,35 +10,28 @@ import Link from "next/link";
 import { Alert } from "@/components/ui/Alert";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { signIn, signInWithGoogle } from "@/lib/supabase/signIn";
 
 interface FormValues {
-  emailOrUsername: string;
+  email: string;
   password: string;
 }
 
-interface LoginFormProps {
-  hasError: boolean;
-}
-
-export const LoginForm: React.FC<LoginFormProps> = (props) => {
+export const LoginForm: React.FC = (props) => {
   const router = useRouter();
-  const [error, setError] = useState(
-    props.hasError ? "Ooops! Something went wrong with the app." : null
-  );
+  const [error, setError] = useState("");
 
   const initialValues: FormValues = {
-    emailOrUsername: "jet_pradas",
+    email: "jet_pradas@yahoo.com",
     password: "Jetpogi_21",
   };
 
   const login = async (values: FormValues) => {
-    const result = await signIn("credentials", {
-      ...values,
-      callbackUrl: "/",
-      redirect: false,
-    });
+    const email = values.email;
+    const password = values.password;
+    const result = await signIn({ email, password });
 
-    if (result?.error) {
+    if (result.error) {
       setError(result.error);
     } else {
       router.replace("/");
@@ -83,9 +75,9 @@ export const LoginForm: React.FC<LoginFormProps> = (props) => {
           >
             {!!error && <Alert variant={"destructive"}>{error}</Alert>}
             <FormikInput
-              name="emailOrUsername"
-              label="Email or Username"
-              placeholder="Email or Username"
+              name="email"
+              label="Email"
+              placeholder="Email"
               setFocusOnLoad={true}
               required
             />
@@ -115,10 +107,8 @@ export const LoginForm: React.FC<LoginFormProps> = (props) => {
             <Button
               variant={"secondary"}
               type="button"
-              onClick={() => {
-                signIn("google", {
-                  callbackUrl: `${window.location.origin}/`,
-                });
+              onClick={async () => {
+                await signInWithGoogle();
               }}
               disabled={isSubmitting || isLoading}
               className="relative tracking-wider rounded-full"

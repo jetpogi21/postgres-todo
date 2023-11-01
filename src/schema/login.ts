@@ -1,9 +1,7 @@
 import * as Yup from "yup";
 
 const validationSchema = Yup.object().shape({
-  emailOrUsername: Yup.string().required(
-    "Please provide your email address or username"
-  ),
+  email: Yup.string().required("Please provide your email address"),
   password: Yup.string().required("Please provide your password"),
 });
 

@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/Toaster";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
+import SessionProvider from "@/components/SessionProvider";
 
 interface ClientProvidersProps {
   children: React.ReactNode;
@@ -31,6 +32,7 @@ const ClientProviders: FC<ClientProvidersProps> = ({ children }) => {
   return (
     <QueryClientProvider client={queryClient}>
       <Toaster />
+      <SessionProvider />
       <TooltipProvider>{children}</TooltipProvider>
     </QueryClientProvider>
   );

@@ -1,13 +1,11 @@
 "use client";
 import { Button } from "@/components/ui/Button";
-import { signOut } from "next-auth/react";
+import { signOut } from "@/lib/supabase/signOut";
 import React from "react";
 
 const SignOutButton = () => {
-  const handleSignOut = () => {
-    signOut({
-      callbackUrl: `${window.location.origin}/login`,
-    });
+  const handleSignOut = async () => {
+    await signOut();
   };
 
   return (

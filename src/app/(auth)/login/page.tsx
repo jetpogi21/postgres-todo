@@ -1,21 +1,17 @@
-import { redirect } from "next/navigation";
+"use client";
+import { useRouter } from "next/navigation";
 import { LoginForm } from "@/components/login/LoginForm";
-import { getAuthSession } from "@/lib/supabase/getAuthSession";
+import { useSessionStore } from "@/lib/supabase/useAuthSession";
 
-const Login = async ({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined };
-}) => {
-  const session = await getAuthSession();
-  const { error } = searchParams;
-  const hasError = Boolean(error);
-
-  if (session) {
-    redirect("/");
+const Login = () => {
+  const router = useRouter();
+  const session = useSessionStore((state) => state.session);
+  const loading = useSessionStore((state) => state.loading);
+  if (session && !loading) {
+    router.replace("/");
   }
 
-  return <LoginForm hasError={hasError} />;
+  return loading ? <div className="flex-1"></div> : <LoginForm />;
 };
 
 export default Login;

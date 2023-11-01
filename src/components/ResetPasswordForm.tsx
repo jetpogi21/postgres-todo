@@ -1,44 +1,47 @@
 "use client";
-import axiosClient from "@/utils/api";
 import { useMutation } from "@tanstack/react-query";
 import { ErrorMessage, Field, Form, Formik, FormikHelpers } from "formik";
 import React from "react";
 import resetPasswordSchema from "@/schema/reset-password";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Loader2 } from "lucide-react";
-interface ResetPasswordFormProps {
-  token: string;
-}
+import { supabase } from "@/lib/supabase/supabase";
+import { toast } from "@/hooks/use-toast";
+import { usePathname, useRouter } from "next/navigation";
 
 interface FormValues {
   password: string;
   passwordConfirmation: string;
 }
 
-const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ token }) => {
+const ResetPasswordForm: React.FC = () => {
+  const router = useRouter();
+
   const initialValues: FormValues = {
     password: "Jetpogi_21",
     passwordConfirmation: "Jetpogi_21",
   };
 
-  const resetPassword = async (values: FormValues) => {
-    try {
-      const { data } = await axiosClient(`/auth/reset-password/${token}`, {
-        data: values,
-      });
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const { mutate, isPending: isLoading } = useMutation({
-    mutationFn: resetPassword,
-    onSuccess: (data) => {
-      //router.push("/dashboard");
+  const { mutate: resetPassword, isPending } = useMutation({
+    mutationFn: async (password: string) => {
+      return await supabase.auth.updateUser({ password });
     },
-    onError: (error) => {
-      console.log({ error });
+    onSuccess: ({ data, error }) => {
+      if (!error) {
+        toast({
+          description: "Password successfully updated.",
+          variant: "success",
+        });
+        router.push("/");
+        return;
+      }
+
+      toast({
+        description: (error.name = "AuthSessionMissingError"
+          ? "Link has expired. Please send a new reset link to your email."
+          : error.message),
+        variant: "destructive",
+      });
     },
   });
 
@@ -47,7 +50,7 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ token }) => {
     { setSubmitting }: FormikHelpers<FormValues>
   ) => {
     // Use useMutation here from react-query
-    mutate(values);
+    resetPassword(values.password);
     setSubmitting(false);
   };
 
@@ -89,10 +92,10 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ token }) => {
           <Button
             type="submit"
             variant="secondary"
-            disabled={isSubmitting || isLoading}
+            disabled={isSubmitting || isPending}
             className="rounded-full"
           >
-            Login
+            Confirm reset
           </Button>
         </Form>
       )}

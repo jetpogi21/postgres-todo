@@ -7,6 +7,10 @@ import Link from "next/link";
 import { useState } from "react";
 import axiosClient from "@/utils/api";
 import { toast } from "@/hooks/use-toast";
+import { usePathname, useRouter } from "next/navigation";
+import { useSessionStore } from "@/lib/supabase/useAuthSession";
+import { useMutation } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase/supabase";
 
 interface FormValues {
   email: string;
@@ -19,27 +23,39 @@ const validationSchema = Yup.object().shape({
 });
 
 const ForgotPasswordPage: React.FC = () => {
-  return <EmailForm />;
+  const router = useRouter();
+  const session = useSessionStore((state) => state.session);
+  const loading = useSessionStore((state) => state.loading);
+  if (session && !loading) {
+    router.replace("/");
+  }
+
+  return loading ? null : <EmailForm />;
 };
 
 const EmailForm: React.FC = () => {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
 
+  const { mutate: sendResetPasswordLink, isPending } = useMutation({
+    mutationFn: async (email: string) => {
+      await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: process.env.NEXT_PUBLIC_DOMAIN! + "/reset-password",
+      });
+    },
+    onSuccess: () => {
+      toast({
+        description: "A password reset link was sent to your email.",
+        variant: "success",
+      });
+    },
+  });
+
   const handleContinueClick = async () => {
     try {
       await validationSchema.validate({ email });
-
-      const { data } = await axiosClient.post("/auth/forgot-password", {
-        email,
-      });
-
-      const message = data.data.message;
-
-      toast({
-        description: message,
-        variant: "success",
-      });
+      setError("");
+      sendResetPasswordLink(email);
     } catch (e: any) {
       console.log(e);
       setError(e.message);
@@ -72,6 +88,7 @@ const EmailForm: React.FC = () => {
       <Button
         className="w-full"
         onClick={handleContinueClick}
+        isLoading={isPending}
       >
         Continue
       </Button>
