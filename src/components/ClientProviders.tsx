@@ -1,5 +1,4 @@
 "use client";
-import { SessionProvider } from "next-auth/react";
 import { FC } from "react";
 import { Toaster } from "@/components/ui/Toaster";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -32,9 +31,7 @@ const ClientProviders: FC<ClientProvidersProps> = ({ children }) => {
   return (
     <QueryClientProvider client={queryClient}>
       <Toaster />
-      <SessionProvider refetchOnWindowFocus={false}>
-        <TooltipProvider>{children}</TooltipProvider>
-      </SessionProvider>
+      <TooltipProvider>{children}</TooltipProvider>
     </QueryClientProvider>
   );
 };

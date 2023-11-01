@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/login/LoginForm";
-import { getAuthSession } from "@/lib/auth";
+import { getAuthSession } from "@/lib/supabase/getAuthSession";
 
 const Login = async ({
   searchParams,
@@ -11,7 +11,7 @@ const Login = async ({
   const { error } = searchParams;
   const hasError = Boolean(error);
 
-  if (session?.user) {
+  if (session) {
     redirect("/");
   }
 

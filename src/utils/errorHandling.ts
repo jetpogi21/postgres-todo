@@ -23,7 +23,10 @@ function handleSequelizeError(error: any) {
       errorCode: 500,
     });
   } else {
-    return NextResponse.json({}, { status: 401, statusText: error.message });
+    return NextResponse.json(error.message, {
+      status: 401,
+      statusText: error.message,
+    });
   }
 }
 
