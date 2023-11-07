@@ -1,11 +1,16 @@
 "use client";
 import { Button } from "@/components/ui/Button";
 import { signOut } from "@/lib/supabase/signOut";
+import { useRouter } from "next/navigation";
 import React from "react";
 
 const SignOutButton = () => {
+  const router = useRouter();
   const handleSignOut = async () => {
-    await signOut();
+    const error = await signOut();
+    if (!error) {
+      router.refresh();
+    }
   };
 
   return (

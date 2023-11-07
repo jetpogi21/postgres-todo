@@ -1,5 +1,6 @@
 import { GetModelsResponse } from "@/interfaces/GeneralInterfaces";
 import { ModelConfig } from "@/interfaces/ModelConfig";
+import { useSessionStore } from "@/lib/supabase/useAuthSession";
 import axiosClient from "@/utils/api";
 import {
   findModelPrimaryKeyField,
@@ -13,20 +14,32 @@ import {
   useMutation,
   useQuery,
 } from "@tanstack/react-query";
+import { useSessionStorage } from "usehooks-ts";
 
-export const updateModels = async <T>(payload: T, config: ModelConfig) => {
+export const updateModels = async <T>(
+  payload: T,
+  config: ModelConfig,
+  accessToken?: string
+) => {
   const { data } = await axiosClient({
     url: `${config.modelPath}/multi`,
     method: "post",
     data: payload,
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
   });
 
   return data as unknown;
 };
 
-export const useUpdateModelsMutation = (modelConfig: ModelConfig) => {
+export const useUpdateModelsMutation = (
+  modelConfig: ModelConfig,
+  accessToken?: string
+) => {
   const modelMutation = useMutation({
-    mutationFn: async (payload) => updateModels(payload, modelConfig),
+    mutationFn: async (payload) =>
+      updateModels(payload, modelConfig, accessToken),
   });
 
   return modelMutation;
@@ -152,12 +165,18 @@ const getModels = async <TModel>({
     }
   ) as Partial<TModel>;
 
-  const { data } = await axiosClient.get<GetModelsResponse<TModel>>(
+  const response = await axiosClient.get<GetModelsResponse<TModel>>(
     config.modelPath,
     {
       params: axiosParams,
+      headers: {
+        //@ts-ignore
+        Authorization: `Bearer ${meta.accessToken}`,
+      },
     }
   );
+
+  const { data } = response;
 
   return data;
 };
@@ -166,6 +185,8 @@ export const useModelsQuery = <TModel>(
   config: ModelConfig,
   { fetchCount, ...otherProps }: Record<string, string>
 ) => {
+  const session = useSessionStore((state) => state.session);
+
   const _ = useInfiniteQuery({
     queryKey: [
       config.modelPath,
@@ -177,8 +198,10 @@ export const useModelsQuery = <TModel>(
       getModels<TModel>({ queryKey, pageParam, meta, config }),
     initialPageParam: "",
     getNextPageParam: (lastPage) => lastPage.cursor ?? undefined,
+    enabled: Boolean(session),
     meta: {
       fetchCount,
+      accessToken: session?.access_token,
     },
   });
   return _;

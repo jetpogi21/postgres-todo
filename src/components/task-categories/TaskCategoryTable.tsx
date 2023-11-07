@@ -24,6 +24,7 @@ import useGlobalDialog from "@/hooks/useGlobalDialog";
 import TaskCategoryForm from "@/components/task-categories/TaskCategoryForm";
 import { Row } from "@tanstack/react-table";
 import { findModelPrimaryKeyField } from "@/utils/utilities";
+import { useSessionStore } from "@/lib/supabase/useAuthSession";
 
 const TaskCategoryTable = <T,>({
   tableStates,
@@ -59,6 +60,9 @@ const TaskCategoryTable = <T,>({
     setCurrentData,
     setIsUpdating,
   } = tableStates;
+
+  const session = useSessionStore((state) => state.session);
+  const accessToken = session?.access_token;
 
   const queryParams = params;
 
@@ -101,7 +105,7 @@ const TaskCategoryTable = <T,>({
   const modelActions = undefined;
 
   const { mutate: updateRecords, mutateAsync: asyncUpdateRecords } =
-    useUpdateModelsMutation(modelConfig);
+    useUpdateModelsMutation(modelConfig, accessToken);
   const rowActions = undefined;
   /* 
   const rowActions = getTaskCategoryRowActions({
@@ -143,7 +147,7 @@ const TaskCategoryTable = <T,>({
       });
     }
   };
- 
+
   const { openDialog, closeDialog } = useGlobalDialog();
 
   const openDialogHandler = (row?: Row<T>["original"]) => {
@@ -175,7 +179,7 @@ const TaskCategoryTable = <T,>({
 
   /* const columnOrderToOverride: [string, number][] = [["isFinished", 2]]; */
   const columnOrderToOverride = undefined;
-  
+
   useEffect(() => {
     setMounted(true);
     return () => {
@@ -187,7 +191,7 @@ const TaskCategoryTable = <T,>({
     if (currentPageData?.count !== undefined) {
       setRecordCount(currentPageData?.count || 0);
     }
-    setFetchCount(!fetchCount);
+    setFetchCount(false);
     setCurrentData(currentData);
   }, [currentPageData?.count, data, page]);
 

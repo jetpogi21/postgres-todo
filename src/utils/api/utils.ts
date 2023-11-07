@@ -1,7 +1,7 @@
 import { ModelConfig } from "@/interfaces/ModelConfig";
 import { AppConfig } from "@/lib/app-config";
 import { ModelSchema } from "@/schema/ModelSchema";
-import { createModel, deleteModels, updateModel } from "@/utils/api/ModelLibs";
+/* import { createModel, deleteModels, updateModel } from "@/utils/api/ModelLibs"; */
 import clsJoin from "@/utils/clsJoin";
 import clsSQL from "@/utils/clsSQL";
 import {
@@ -18,7 +18,7 @@ import {
   removeDuplicates,
   splitWordByLastHyphen,
 } from "@/utils/utils";
-import { Op, Transaction } from "sequelize";
+/* import { Op, Transaction } from "sequelize"; */
 
 export function getSortedValue(
   sort: string | undefined,
@@ -124,11 +124,11 @@ export function appendFieldsToSQL(
   fields.forEach((field) => {
     let fieldName, fieldAlias;
     if (Array.isArray(field)) {
-      fieldAlias = `\`${field[1]}\``;
-      fieldName = `\`${field[0]}\``;
+      fieldAlias = `"${field[1]}"`;
+      fieldName = `"${field[0]}"`;
     } else {
-      fieldAlias = `\`${field}\``;
-      fieldName = `\`${field}\``;
+      fieldAlias = `"${field}"`;
+      fieldName = `"${field}"`;
     }
 
     sql.fields.push(`${table}.${fieldName} AS ${fieldAlias}`);
@@ -152,10 +152,10 @@ export function processFields(
   fields.forEach((field) => {
     let fieldAlias, fieldName;
     if (Array.isArray(field)) {
-      fieldAlias = `\`${modelName}.${field[1]}\``;
+      fieldAlias = `"${modelName}.${field[1]}"`;
       fieldName = field[0];
     } else {
-      fieldAlias = `\`${modelName}.${field}\``;
+      fieldAlias = `"${modelName}.${field}"`;
       fieldName = field;
     }
 
@@ -164,7 +164,7 @@ export function processFields(
   });
 }
 
-export function buildOrConditions(
+/* export function buildOrConditions(
   sortField: string,
   cursorCondition: symbol,
   cursorArray: [string, string],
@@ -186,9 +186,9 @@ export function buildOrConditions(
       },
     },
   };
-}
+} */
 
-export function buildAndConditions(
+/* export function buildAndConditions(
   sortField: string,
   cursorCondition: symbol,
   cursorArray: [string, string],
@@ -204,9 +204,9 @@ export function buildAndConditions(
       },
     },
   };
-}
+} */
 
-export const appendAndFilters = (
+/* export const appendAndFilters = (
   andFilters: any[],
   sort: string,
   sortField: string,
@@ -287,7 +287,7 @@ export const appendAndFilters = (
       },
     });
   }
-};
+}; */
 
 export const getCursor = (
   data: any[],
@@ -551,7 +551,7 @@ export const processQueryFilters = (
             const relatedModelJoin = new clsJoin(
               relatedModelSQL.sql.sql(),
               modelRelationship.rightForeignKey,
-              `\`${relatedModelSQL.modelName}.${leftForeignKeyField.fieldName}\``,
+              `"${relatedModelSQL.modelName}.${leftForeignKeyField.fieldName}"`,
               `temp${relatedModelSQL.modelName}FilterQuery`,
               "INNER"
             );
@@ -603,7 +603,7 @@ const processLeftModelRelationships = (
     const join = createJoin(
       childSQL.sql(),
       relationship.leftForeignKey,
-      `\`${modelName}.${relationship.rightForeignKey}\``,
+      `"${modelName}.${relationship.rightForeignKey}"`,
       subqueryAlias,
       "INNER"
     );
@@ -616,7 +616,7 @@ const processLeftModelRelationships = (
     const leftJoin = createJoin(
       leftSQL.sql(),
       relationship.leftForeignKey,
-      `\`${modelName}.${relationship.rightForeignKey}\``,
+      `"${modelName}.${relationship.rightForeignKey}"`,
       subqueryAlias,
       "LEFT"
     );
@@ -669,7 +669,7 @@ const processRightModelRelationships = (
     const join = createJoin(
       childSQL.sql(),
       relationship.rightForeignKey,
-      `\`${modelName}.${leftModelField.fieldName}\``,
+      `"${modelName}.${leftModelField.fieldName}"`,
       subqueryAlias,
       "INNER"
     );
@@ -682,7 +682,7 @@ const processRightModelRelationships = (
     const leftJoin = createJoin(
       leftSQL.sql(),
       relationship.rightForeignKey,
-      `\`${modelName}.${leftModelField.fieldName}\``,
+      `"${modelName}.${leftModelField.fieldName}"`,
       subqueryAlias,
       "LEFT"
     );
@@ -738,7 +738,7 @@ export const getChildModelSQL = (
   dontFilter: boolean,
   modelConfig: ModelConfig
 ) => {
-  const table = modelConfig.tableName;
+  const table = `${AppConfig.sanitizedAppName}.${modelConfig.tableName}`;
   const fields: ([string, string] | string)[] =
     generateFieldsForSQL(modelConfig);
   const fieldAliases: string[] = [];
@@ -790,6 +790,7 @@ export function getMainModelSQL(
   const sortField = sort.includes("-") ? sort.substring(1) : sort;
 
   //Declare the variables
+  /* const table = `${AppConfig.sanitizedAppName}_${modelConfig.tableName}`; */
   const table = modelConfig.tableName;
   const primaryKeyField = findModelPrimaryKeyField(modelConfig);
   const fields: ([string, string] | string)[] =
@@ -836,7 +837,7 @@ export function getMainModelSQL(
   //Count should be pre-cursor
   //This part would return the count SQL
   sql.fields = [
-    `COUNT(DISTINCT ${table}.${primaryKeyField.databaseFieldName}) AS count`,
+    `COUNT(DISTINCT ${AppConfig.sanitizedAppName}.${table}.${primaryKeyField.databaseFieldName}) AS count`,
   ];
   if (filters.length > 0) {
     sql.filter = filters.join(" AND ");
@@ -947,7 +948,7 @@ export const removeDuplicatesFromRightModelRelationships = (
     });
 };
 
-export const deleteRelatedSimpleModels = async (
+/* export const deleteRelatedSimpleModels = async (
   modelConfig: ModelConfig,
   res: Record<string, unknown>,
   t: Transaction
@@ -973,9 +974,9 @@ export const deleteRelatedSimpleModels = async (
       }
     })
   );
-};
+}; */
 
-export const createNewRecordsForModelAndSimpleRelationships = async (
+/* export const createNewRecordsForModelAndSimpleRelationships = async (
   modelConfig: ModelConfig,
   parentPrimaryKeyValue: string | number,
   res: Record<string, unknown>,
@@ -1038,9 +1039,9 @@ export const createNewRecordsForModelAndSimpleRelationships = async (
       newRecords[leftModelConfig.pluralizedModelName] = newChildRecords;
     })
   );
-};
+}; */
 
-export const updateOrCreateRelatedRecords = async (
+/* export const updateOrCreateRelatedRecords = async (
   modelConfig: ModelConfig,
   res: any,
   parentPrimaryKeyValue: number | string,
@@ -1101,4 +1102,4 @@ export const updateOrCreateRelatedRecords = async (
       newRecords[leftModelConfig.pluralizedModelName] = newChildRecords;
     })
   );
-};
+}; */

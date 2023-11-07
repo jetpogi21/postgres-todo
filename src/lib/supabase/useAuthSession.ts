@@ -5,9 +5,9 @@ import { Session } from "@supabase/supabase-js";
 import { create } from "zustand";
 
 type State = {
-  session?: Session["user"] | null;
+  session?: Session | null;
   loading: boolean;
-  setSession: (session: State["session"]) => void;
+  setSession: (session: Session | null) => void;
   setLoading: (loading: boolean) => void;
 };
 

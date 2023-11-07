@@ -4,7 +4,7 @@ import TaskCategoryFilterForm from "@/components/task-categories/TaskCategoryFil
 import TaskCategoryTable from "@/components/task-categories/TaskCategoryTable";
 import { useTableProps } from "@/hooks/useTableProps";
 import { ModelConfig } from "@/interfaces/ModelConfig";
-import TaskCategoryModel from "@/models/TaskCategoryModel";
+import { TaskCategoryModel } from "@/interfaces/TaskCategoryInterfaces";
 import React from "react";
 
 const TaskCategoryStateHolder = ({
@@ -13,6 +13,7 @@ const TaskCategoryStateHolder = ({
   modelConfig: ModelConfig;
 }) => {
   const tableStates = useTableProps<TaskCategoryModel>(modelConfig);
+
   return (
     <>
       <div className="flex">

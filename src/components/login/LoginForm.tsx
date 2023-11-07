@@ -11,6 +11,7 @@ import { Alert } from "@/components/ui/Alert";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn, signInWithGoogle } from "@/lib/supabase/signIn";
+import { toast } from "@/hooks/use-toast";
 
 interface FormValues {
   email: string;
@@ -108,7 +109,18 @@ export const LoginForm: React.FC = (props) => {
               variant={"secondary"}
               type="button"
               onClick={async () => {
-                await signInWithGoogle();
+                const { data, error } = await signInWithGoogle();
+
+                if (error) {
+                  console.log(error);
+                  toast({
+                    variant: "destructive",
+                    description: "Something went wrong!",
+                  });
+                  return;
+                }
+
+                router.refresh();
               }}
               disabled={isSubmitting || isLoading}
               className="relative tracking-wider rounded-full"

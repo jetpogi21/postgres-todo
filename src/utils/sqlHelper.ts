@@ -1,5 +1,4 @@
 import { SQLField, SQLJoin, SQLTable } from "../interfaces/interface";
-import { ModelStatic } from "sequelize";
 
 class SQLHelper {
   fields?: SQLField[];
@@ -84,86 +83,6 @@ class SQLHelper {
     return sql;
   }
 
-  getFieldsFromModel(
-    Model: ModelStatic<any>,
-    pluralForm?: string,
-    exception?: string[]
-  ): SQLField[] {
-    const modelAttr = Model.getAttributes();
-    const fields: SQLField[] = [];
-    const modelName: string = Model.name;
-    const tableAlias = this.table ? this.table.alias : "";
-    Object.keys(modelAttr).map((key) => {
-      if (exception && exception.includes(key)) {
-        return;
-      }
-
-      const modelField = modelAttr[key];
-      const fieldObject: SQLField = { name: modelField.field || "" };
-      if (modelField.field !== key) {
-        fieldObject["alias"] = key;
-      }
-      if (modelName !== tableAlias) {
-        fieldObject["tableName"] = modelName;
-      }
-      if (pluralForm) {
-        fieldObject["pluralForm"] = pluralForm;
-      }
-      fields.push(fieldObject);
-    });
-
-    return fields;
-  }
-
-  getJoinsFromField(
-    Model: ModelStatic<any>,
-    JoinModel: ModelStatic<any>
-  ): SQLJoin {
-    //[[table,alias,connectorRight,connectorLeft,joinType]]
-    let table = JoinModel.getTableName();
-    if (typeof table !== "string") {
-      table = table.tableName;
-    }
-    let alias = JoinModel.name;
-    let connectorRight = "";
-    let connectorLeft = "";
-
-    const modelAttr = Model.getAttributes();
-    Object.keys(modelAttr).find((key) => {
-      const modelField = modelAttr[key];
-      if (modelField.references) {
-        if (
-          typeof modelField.references !== "string" &&
-          modelField.references.model === table
-        ) {
-          connectorRight = modelField.field || "";
-          connectorLeft = modelField.references.key || "";
-          return true;
-        }
-      }
-    });
-
-    if (!connectorRight) {
-      const joinModelAttr = JoinModel.getAttributes();
-      Object.keys(joinModelAttr).find((key) => {
-        const modelField = joinModelAttr[key];
-        if (modelField.references) {
-          if (
-            typeof modelField.references !== "string" &&
-            modelField.references.model === Model.getTableName()
-          ) {
-            connectorRight = modelField.references.key || "";
-            connectorLeft = modelField.field || "";
-            return true;
-          }
-        }
-      });
-    }
-
-    //The other way around if there's no match found...
-    return { table, alias, connectorRight, connectorLeft };
-  }
-
   getGroupByStatement(): string {
     const groupByArr: string[] = [];
     this.groupBy?.map((item) => {
@@ -223,7 +142,7 @@ class SQLHelper {
       const fieldName = field.name;
       const tableName = field.tableName || (this.table ? this.table.alias : "");
 
-      tablePart = `\`${tableName}\`.\`${fieldName}\``;
+      tablePart = `"${tableName}"."${fieldName}"`;
 
       if (field.alias || field.tableName) {
         aliasPart = field.alias || fieldName;
@@ -234,7 +153,7 @@ class SQLHelper {
 
       let completeFieldName = tablePart;
       if (aliasPart) {
-        completeFieldName = `${completeFieldName} AS \`${aliasPart}\``;
+        completeFieldName = `${completeFieldName} AS "${aliasPart}"`;
       }
 
       fieldArray.push(completeFieldName);

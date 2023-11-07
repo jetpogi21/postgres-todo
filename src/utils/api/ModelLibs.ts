@@ -1,8 +1,6 @@
 import { ModelConfig } from "@/interfaces/ModelConfig";
 import { backendModels } from "@/lib/backend-models";
 import { findModelPrimaryKeyField, forceCastToNumber } from "@/utils/utilities";
-import { Op } from "sequelize";
-import { Transaction } from "sequelize";
 
 const createParsedPayload = (
   modelConfig: ModelConfig,
@@ -38,7 +36,15 @@ const createParsedPayload = (
   return parsedPayload;
 };
 
-export const createModel = async (
+export const getCreateJSON = (
+  modelConfig: ModelConfig,
+  payload: Record<string, unknown>
+) => {
+  const parsedPayload = createParsedPayload(modelConfig, payload);
+  return parsedPayload;
+};
+
+/* export const createModel = async (
   modelConfig: ModelConfig,
   payload: Record<string, unknown>,
   t: Transaction
@@ -87,4 +93,4 @@ export const deleteModels = async (
     where: { [primaryKeyField.fieldName]: { [Op.in]: deletedIds } },
     transaction: t,
   });
-};
+}; */

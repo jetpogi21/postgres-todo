@@ -482,16 +482,20 @@ const ModelDataTable = <T, U, V>({
             isLoading={isLoading}
             isFetching={isFetching}
             dialogFormProps={dialogFormProps}
-            onRowClick={(row) => {
-              const hasSlugField = !!modelConfig.slugField;
+            onRowClick={
+              modelConfig.fields.length === 2
+                ? undefined
+                : (row) => {
+                    const hasSlugField = !!modelConfig.slugField;
 
-              const url = `${pathname}/${
-                hasSlugField
-                  ? row["slug" as keyof typeof row]
-                  : row[primaryKeyFieldName as keyof typeof row]
-              }`;
-              router.push(url);
-            }}
+                    const url = `${pathname}/${
+                      hasSlugField
+                        ? row["slug" as keyof typeof row]
+                        : row[primaryKeyFieldName as keyof typeof row]
+                    }`;
+                    router.push(url);
+                  }
+            }
           />
         </div>
         <div className="flex items-center justify-between mt-auto text-sm select-none text-muted-foreground">

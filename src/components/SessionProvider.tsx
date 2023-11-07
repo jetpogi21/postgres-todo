@@ -15,34 +15,37 @@ const SessionProvider = () => {
   const { data } = useQuery({
     queryKey: ["session"],
     queryFn: async () => {
-      return await supabase.auth.getUser();
+      return await supabase.auth.getSession();
     },
   });
 
-  const user = data?.data.user;
+  const session = data?.data.session || null;
 
   useEffect(() => {
-    setSession(user);
+    setSession(session);
     setLoading(false);
-  }, [user]);
+    if (session?.access_token) {
+      router.refresh();
+    }
+  }, [session]);
 
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, session) => {
         switch (event) {
           case "SIGNED_IN":
-            setSession(session?.user);
+            setSession(session!);
             break;
           case "SIGNED_OUT":
-            setSession(undefined);
+            setSession(null);
             router.push("/login");
             break;
           case "PASSWORD_RECOVERY":
-            setSession(undefined);
+            setSession(null);
             console.log("Password recovery action triggered in session.");
             break;
           case "USER_UPDATED":
-            setSession(session?.user);
+            setSession(session);
             console.log("User update action triggered in session.");
             break;
           case "INITIAL_SESSION":

@@ -1,0 +1,42 @@
+import { splitWordByLastHyphen } from "@/utils/utils";
+
+export function addCursorFilterToURL(
+  cursor: string,
+  sort: string,
+  sortField: string,
+  PRIMARY_KEY: string,
+  filters: string[],
+  tableName?: string
+): void {
+  const cursorCondition = sort.includes("-") ? "<" : ">";
+  const [cursorArray0, cursorArray1] = splitWordByLastHyphen(cursor);
+
+  const realPrimaryKey = tableName ? `${PRIMARY_KEY}` : PRIMARY_KEY;
+
+  const realSortField = tableName ? `${sortField}` : sortField;
+
+  const addFilter = (condition: string, clause?: string) => {
+    filters.push(clause ? `(${clause})` : condition);
+  };
+
+  if (sortField !== PRIMARY_KEY) {
+    if (!cursorArray0) {
+      addFilter(
+        `and(${realSortField}.is.null,${realPrimaryKey}.gt.${cursorArray1})`,
+        cursorCondition === "<"
+          ? `and(${realSortField}.is.null,${realPrimaryKey}.gt.${cursorArray1})`
+          : `or(${realSortField}.not.is.null,and(${realSortField}.is.null,${realPrimaryKey}.gt.${cursorArray1}))`
+      );
+    } else {
+      const cursorCondSymbol = cursorCondition === ">" ? "gt" : "lt";
+
+      addFilter(
+        `or(${realSortField}.${cursorCondSymbol}.${cursorArray0},and(${realSortField}.eq.${cursorArray0},${realPrimaryKey}.gt.${cursorArray1}))`,
+        undefined
+      );
+    }
+  } else {
+    const cursorCondSymbol = cursorCondition === ">" ? "gt" : "lt";
+    addFilter(`${realSortField}.${cursorCondSymbol}.${cursor}`, undefined);
+  }
+}
