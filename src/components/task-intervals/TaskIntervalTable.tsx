@@ -7,7 +7,11 @@ import {
   TaskIntervalSearchParams,
 } from "@/interfaces/TaskIntervalInterfaces";
 import { useQueryClient } from "@tanstack/react-query";
-import { useModelsQuery, useUpdateModelsMutation } from "@/hooks/useModelQuery";
+import {
+  UpdateModelsData,
+  useModelsQuery,
+  useUpdateModelsMutation,
+} from "@/hooks/useModelQuery";
 import { TaskIntervalConfig } from "@/utils/config/TaskIntervalConfig";
 import { BasicModel, GetModelsResponse } from "@/interfaces/GeneralInterfaces";
 import { useModelPageParams } from "@/hooks/useModelPageParams";
@@ -18,7 +22,7 @@ import ModelDataTable from "@/components/ModelDataTable";
 import { createRequiredModelLists } from "@/lib/createRequiredModelLists";
 import { getInitialValues } from "@/lib/getInitialValues";
 import { toast } from "@/hooks/use-toast";
-import { Formik, FormikProps } from "formik";
+import { Formik, FormikHelpers, FormikProps } from "formik";
 import { ModelSchema } from "@/schema/ModelSchema";
 import useGlobalDialog from "@/hooks/useGlobalDialog";
 import TaskIntervalForm from "@/components/task-intervals/TaskIntervalForm";
@@ -119,7 +123,10 @@ const TaskIntervalTable = <T,>({
   >();
   */
 
-  const handleSubmit = async (values: TaskIntervalFormikInitialValues) => {
+  const handleSubmit = async (
+    values: TaskIntervalFormikInitialValues,
+    formik: FormikHelpers<TaskIntervalFormikInitialValues>
+  ) => {
     //The reference is the index of the row
     const rowsToBeSubmitted = (
       values[
@@ -127,23 +134,43 @@ const TaskIntervalTable = <T,>({
       ] as TaskIntervalFormikInitialValues["TaskIntervals"]
     ).filter((item) => item.touched);
 
-    if (rowsToBeSubmitted.length > 0) {
-      setIsUpdating(true);
-      const payload = {
-        [pluralizedModelName]: rowsToBeSubmitted,
-      };
+    if (rowsToBeSubmitted.length === 0) {
+      toast({
+        description: `No change detected.`,
+      });
+      return;
+    }
 
-      //@ts-ignore
-      asyncUpdateRecords(payload).then((data) => {
-        setIsUpdating(false);
-        toast({
-          variant: "success",
-          description: `${modelConfig.pluralizedVerboseModelName} successfully updated`,
+    setIsUpdating(true);
+    const payload = {
+      [pluralizedModelName]: rowsToBeSubmitted,
+    };
+
+    //@ts-ignore
+    asyncUpdateRecords(payload).then((data) => {
+      const { inserted, updated } =
+        data as unknown as UpdateModelsData<TaskIntervalModel>;
+
+      Object.keys(inserted).forEach((idx) => {
+        const numIdx = idx as unknown as number;
+        formik.setFieldValue(`${pluralizedModelName}[${idx}]`, {
+          ...values[
+            pluralizedModelName as keyof TaskIntervalFormikInitialValues
+          ][numIdx],
+          touched: false,
+          [primaryKeyFieldName]:
+            inserted[numIdx][primaryKeyFieldName as keyof TaskIntervalModel],
         });
       });
-    }
+
+      setIsUpdating(false);
+      toast({
+        variant: "success",
+        description: `${modelConfig.pluralizedVerboseModelName} successfully updated`,
+      });
+    });
   };
- 
+
   const { openDialog, closeDialog } = useGlobalDialog();
 
   const openDialogHandler = (row?: Row<T>["original"]) => {
@@ -175,7 +202,7 @@ const TaskIntervalTable = <T,>({
 
   /* const columnOrderToOverride: [string, number][] = [["isFinished", 2]]; */
   const columnOrderToOverride = undefined;
-  
+
   useEffect(() => {
     setMounted(true);
     return () => {
@@ -187,7 +214,7 @@ const TaskIntervalTable = <T,>({
     if (currentPageData?.count !== undefined) {
       setRecordCount(currentPageData?.count || 0);
     }
-    setFetchCount(!fetchCount);
+    setFetchCount(false);
     setCurrentData(currentData);
   }, [currentPageData?.count, data, page]);
 
