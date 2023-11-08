@@ -1,6 +1,5 @@
 import { GetModelsResponse } from "@/interfaces/GeneralInterfaces";
 import { ModelConfig } from "@/interfaces/ModelConfig";
-import { useSessionStore } from "@/lib/supabase/useAuthSession";
 import axiosClient from "@/utils/api";
 import {
   findModelPrimaryKeyField,
@@ -14,32 +13,25 @@ import {
   useMutation,
   useQuery,
 } from "@tanstack/react-query";
-import { useSessionStorage } from "usehooks-ts";
 
-export const updateModels = async <T>(
-  payload: T,
-  config: ModelConfig,
-  accessToken?: string
-) => {
+export interface UpdateModelsData<T> {
+  inserted: Record<number, T>;
+  updated: Record<number, T>;
+}
+
+export const updateModels = async <T>(payload: T, config: ModelConfig) => {
   const { data } = await axiosClient({
     url: `${config.modelPath}/multi`,
     method: "post",
     data: payload,
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
   });
 
-  return data as unknown;
+  return data as UpdateModelsData<T>;
 };
 
-export const useUpdateModelsMutation = (
-  modelConfig: ModelConfig,
-  accessToken?: string
-) => {
+export const useUpdateModelsMutation = (modelConfig: ModelConfig) => {
   const modelMutation = useMutation({
-    mutationFn: async (payload) =>
-      updateModels(payload, modelConfig, accessToken),
+    mutationFn: async (payload) => updateModels(payload, modelConfig),
   });
 
   return modelMutation;
@@ -169,10 +161,6 @@ const getModels = async <TModel>({
     config.modelPath,
     {
       params: axiosParams,
-      headers: {
-        //@ts-ignore
-        Authorization: `Bearer ${meta.accessToken}`,
-      },
     }
   );
 
@@ -185,8 +173,6 @@ export const useModelsQuery = <TModel>(
   config: ModelConfig,
   { fetchCount, ...otherProps }: Record<string, string>
 ) => {
-  const session = useSessionStore((state) => state.session);
-
   const _ = useInfiniteQuery({
     queryKey: [
       config.modelPath,
@@ -198,10 +184,8 @@ export const useModelsQuery = <TModel>(
       getModels<TModel>({ queryKey, pageParam, meta, config }),
     initialPageParam: "",
     getNextPageParam: (lastPage) => lastPage.cursor ?? undefined,
-    enabled: Boolean(session),
     meta: {
       fetchCount,
-      accessToken: session?.access_token,
     },
   });
   return _;

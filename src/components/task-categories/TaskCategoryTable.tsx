@@ -7,7 +7,11 @@ import {
   TaskCategorySearchParams,
 } from "@/interfaces/TaskCategoryInterfaces";
 import { useQueryClient } from "@tanstack/react-query";
-import { useModelsQuery, useUpdateModelsMutation } from "@/hooks/useModelQuery";
+import {
+  UpdateModelsData,
+  useModelsQuery,
+  useUpdateModelsMutation,
+} from "@/hooks/useModelQuery";
 import { TaskCategoryConfig } from "@/utils/config/TaskCategoryConfig";
 import { BasicModel, GetModelsResponse } from "@/interfaces/GeneralInterfaces";
 import { useModelPageParams } from "@/hooks/useModelPageParams";
@@ -18,13 +22,12 @@ import ModelDataTable from "@/components/ModelDataTable";
 import { createRequiredModelLists } from "@/lib/createRequiredModelLists";
 import { getInitialValues } from "@/lib/getInitialValues";
 import { toast } from "@/hooks/use-toast";
-import { Formik, FormikProps } from "formik";
+import { Formik, FormikHelpers, FormikProps } from "formik";
 import { ModelSchema } from "@/schema/ModelSchema";
 import useGlobalDialog from "@/hooks/useGlobalDialog";
 import TaskCategoryForm from "@/components/task-categories/TaskCategoryForm";
 import { Row } from "@tanstack/react-table";
 import { findModelPrimaryKeyField } from "@/utils/utilities";
-import { useSessionStore } from "@/lib/supabase/useAuthSession";
 
 const TaskCategoryTable = <T,>({
   tableStates,
@@ -60,9 +63,6 @@ const TaskCategoryTable = <T,>({
     setCurrentData,
     setIsUpdating,
   } = tableStates;
-
-  const session = useSessionStore((state) => state.session);
-  const accessToken = session?.access_token;
 
   const queryParams = params;
 
@@ -105,7 +105,7 @@ const TaskCategoryTable = <T,>({
   const modelActions = undefined;
 
   const { mutate: updateRecords, mutateAsync: asyncUpdateRecords } =
-    useUpdateModelsMutation(modelConfig, accessToken);
+    useUpdateModelsMutation(modelConfig);
   const rowActions = undefined;
   /* 
   const rowActions = getTaskCategoryRowActions({
@@ -123,7 +123,10 @@ const TaskCategoryTable = <T,>({
   >();
   */
 
-  const handleSubmit = async (values: TaskCategoryFormikInitialValues) => {
+  const handleSubmit = async (
+    values: TaskCategoryFormikInitialValues,
+    formik: FormikHelpers<TaskCategoryFormikInitialValues>
+  ) => {
     //The reference is the index of the row
     const rowsToBeSubmitted = (
       values[
@@ -131,21 +134,41 @@ const TaskCategoryTable = <T,>({
       ] as TaskCategoryFormikInitialValues["TaskCategories"]
     ).filter((item) => item.touched);
 
-    if (rowsToBeSubmitted.length > 0) {
-      setIsUpdating(true);
-      const payload = {
-        [pluralizedModelName]: rowsToBeSubmitted,
-      };
+    if (rowsToBeSubmitted.length === 0) {
+      toast({
+        description: `No change detected.`,
+      });
+      return;
+    }
 
-      //@ts-ignore
-      asyncUpdateRecords(payload).then((data) => {
-        setIsUpdating(false);
-        toast({
-          variant: "success",
-          description: `${modelConfig.pluralizedVerboseModelName} successfully updated`,
+    setIsUpdating(true);
+    const payload = {
+      [pluralizedModelName]: rowsToBeSubmitted,
+    };
+
+    //@ts-ignore
+    asyncUpdateRecords(payload).then((data) => {
+      const { inserted, updated } =
+        data as unknown as UpdateModelsData<TaskCategoryModel>;
+
+      Object.keys(inserted).forEach((idx) => {
+        const numIdx = idx as unknown as number;
+        formik.setFieldValue(`${pluralizedModelName}[${idx}]`, {
+          ...values[
+            pluralizedModelName as keyof TaskCategoryFormikInitialValues
+          ][numIdx],
+          touched: false,
+          [primaryKeyFieldName]:
+            inserted[numIdx][primaryKeyFieldName as keyof TaskCategoryModel],
         });
       });
-    }
+
+      setIsUpdating(false);
+      toast({
+        variant: "success",
+        description: `${modelConfig.pluralizedVerboseModelName} successfully updated`,
+      });
+    });
   };
 
   const { openDialog, closeDialog } = useGlobalDialog();
@@ -229,12 +252,14 @@ const TaskCategoryTable = <T,>({
         validationSchema={ModelSchema(modelConfig, true)}
         validateOnChange={false}
       >
-        {(formik) => (
-          <ModelDataTable
-            {...commonProps}
-            formik={formik as unknown as FormikProps<T>}
-          />
-        )}
+        {(formik) => {
+          return (
+            <ModelDataTable
+              {...commonProps}
+              formik={formik as unknown as FormikProps<T>}
+            />
+          );
+        }}
       </Formik>
     ))
   );

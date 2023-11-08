@@ -3,23 +3,20 @@ import { AppConfig } from "@/lib/app-config";
 import { getURLORder } from "@/lib/getURLOrder";
 import { addCursorFilterToURL } from "@/utils/api/addCursorFilterToURL";
 import { appendFieldsToColumn } from "@/utils/api/appendFieldsToColumn";
-import { processSelectJoins } from "@/utils/api/processSelectJoins";
 import { processURLFilters } from "@/utils/api/processURLFilters";
 import {
-  addCursorFilterToQuery,
-  appendFieldsToSQL,
   generateFieldsForSQL,
   getSortedValueSimplified,
-  processQueryFilters,
-  processQueryJoins,
 } from "@/utils/api/utils";
 import { findModelPrimaryKeyField } from "@/utils/utilities";
 import { getSort } from "@/utils/utils";
+import { createSupabaseRoute } from "@/lib/supabase/supabase";
 
 export function getMainModelURL(
   query: Record<string, string>,
   dontFilter: boolean = false,
   modelConfig: ModelConfig,
+  supabase: ReturnType<typeof createSupabaseRoute>,
   options?: {
     primaryKeyValue?: string | number;
     useSlug?: boolean;
@@ -35,9 +32,24 @@ export function getMainModelURL(
   //Declare the variables
   /* const table = `${AppConfig.sanitizedAppName}_${modelConfig.tableName}`; */
   const table = modelConfig.tableName;
+
   const primaryKeyField = findModelPrimaryKeyField(modelConfig);
   const fields: ([string, string] | string)[] =
     generateFieldsForSQL(modelConfig);
+
+  //build the sql field name and aliases (aliases are used to destructure the object)
+  const columns: string[] = [];
+  appendFieldsToColumn(fields, columns);
+
+  let supQuery: any = supabase.schema(AppConfig.sanitizedAppName).from(table);
+
+  const fetchCount = query["fetchCount"] === "true";
+
+  if (fetchCount) {
+    supQuery = supQuery.select(columns.join(","), { count: "exact" });
+  } else {
+    supQuery = supQuery.select(columns.join(","));
+  }
 
   //This will be used to store the fields to be used from the joins
 
@@ -52,16 +64,27 @@ export function getMainModelURL(
 
   if (!simpleOnly || simpleOnly !== "true") {
     if (!dontFilter) {
-      processURLFilters(filters, query, modelConfig, replacements, true);
+      //After this function there will be new supQuery
+      processURLFilters(
+        filters,
+        query,
+        modelConfig,
+        replacements,
+        supQuery,
+        true
+      );
     }
   }
 
+  //This is for the detailed view wether find the id or the slug
   if (options?.primaryKeyValue) {
     const id = options.primaryKeyValue;
     if (options?.useSlug) {
-      filters.push(`slug=eq.${id}`);
+      supQuery = supQuery.eq("slug", id);
+      /* filters.push(`slug=eq.${id}`); */
     } else {
-      filters.push(`${primaryKeyField.databaseFieldName}=eq.${id}`);
+      supQuery = supQuery.eq(primaryKeyField.databaseFieldName, id);
+      /* filters.push(`${primaryKeyField.databaseFieldName}=eq.${id}`); */
     }
   }
 
@@ -80,16 +103,13 @@ export function getMainModelURL(
       sortField,
       primaryKeyField.databaseFieldName,
       filters,
+      supQuery,
       table
     );
   }
 
-  const order = getURLORder(orderBy);
-  const filterString = filters.length > 0 ? `and=(${filters.join(",")})` : "";
-
-  //build the sql field name and aliases (aliases are used to destructure the object)
-  const columns: string[] = [];
-  appendFieldsToColumn(fields, columns);
+  getURLORder(orderBy, supQuery);
+  supQuery.limit(limit);
 
   //TO DO: JOINS (filtering, ordering etc.)
   const joins = "";
@@ -104,13 +124,7 @@ export function getMainModelURL(
   //rowURL should be `tableName`
   //columns --> fieldName:databaseFIeldName to rename
   //append filterString only if it's not null
-  const countURL = `/${table}?columns=${columns}${joins}&order=${order}&limit=${limit}${
-    filterString ? "&" + filterString : ""
-  }`;
-  const rowURL = `${countURL}&limit=${limit}`;
+  /* const rowURL = `${countURL}&limit=${limit}`; */
 
-  return {
-    rowURL,
-    countURL,
-  };
+  return supQuery;
 }

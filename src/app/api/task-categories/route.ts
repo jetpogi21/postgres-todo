@@ -5,14 +5,10 @@ import { NextResponse } from "next/server";
 import { getCursorString, getSortedValueSimplified } from "@/utils/api/utils";
 import { TaskCategoryConfig } from "@/utils/config/TaskCategoryConfig";
 import { findConfigItem, findModelPrimaryKeyField } from "@/utils/utilities";
-import { axiosServerClient } from "@/utils/api";
 import { getMainModelURL } from "@/utils/api/getMainModelURL";
 import handleSequelizeError from "@/utils/errorHandling";
-import { extractTextAfterSlash } from "@/lib/extractTextAfterSlash";
-import { ModelSchema } from "@/schema/ModelSchema";
-import { getCreateJSON } from "@/utils/api/ModelLibs";
-import { getRelatedSimpleModelJSON } from "@/lib/getRelatedSimpleModelJSON";
-import { getRelatedModelJSON } from "@/lib/getRelatedModelJSON";
+import { createSupabaseRoute } from "@/lib/supabase/supabase";
+import { cookies } from "next/headers";
 
 const modelConfig = TaskCategoryConfig;
 const primaryKey = findModelPrimaryKeyField(modelConfig).databaseFieldName;
@@ -21,7 +17,8 @@ export const GET = async (req: Request) => {
   const searchParams = new URL(req.url).searchParams;
   const query = parseParams(searchParams) as Partial<TaskCategorySearchParams>;
 
-  const authorization = req.headers.get("Authorization");
+  const cookieStore = cookies();
+  const supabase = createSupabaseRoute(cookieStore);
 
   const fetchCount = query["fetchCount"] === "true";
   const sort = getSortedValueSimplified(query["sort"], modelConfig);
@@ -34,36 +31,10 @@ export const GET = async (req: Request) => {
     "fieldName"
   );
 
-  let { rowURL, countURL } = getMainModelURL(query, false, modelConfig);
+  const supQuery = getMainModelURL(query, false, modelConfig, supabase);
 
-  let recordCount = 0;
-  if (fetchCount) {
-    try {
-      const response = await axiosServerClient.head(countURL, {
-        headers: {
-          prefer: "count=exact",
-          Authorization: authorization,
-        },
-      });
-
-      const { headers } = response;
-
-      const contentRange = headers["content-range"];
-      recordCount = extractTextAfterSlash(contentRange);
-    } catch (e) {
-      return handleSequelizeError(e);
-    }
-  }
-
-  //Issue a supabase query
   try {
-    const response = await axiosServerClient.get(rowURL, {
-      headers: {
-        Authorization: authorization,
-      },
-    });
-
-    const { data } = response;
+    const { data, error, count } = await supQuery;
 
     let cursor = "";
 
@@ -71,17 +42,26 @@ export const GET = async (req: Request) => {
       cursor = getCursorString(cursorField, primaryKey, data);
     }
 
+    if (error) {
+      return NextResponse.json({
+        rows: [],
+        status: "error",
+        error: error.message,
+      });
+    }
+
     return NextResponse.json({
       rows: data,
       cursor,
-      ...(fetchCount && { count: recordCount }),
+      ...(fetchCount && { count }),
     });
   } catch (e) {
     return handleSequelizeError(e);
   }
 };
 
-export const POST = async (req: Request) => {
+//TO DO: POST route
+/* export const POST = async (req: Request) => {
   const res = await req.json();
 
   try {
@@ -89,20 +69,61 @@ export const POST = async (req: Request) => {
   } catch (error) {
     return handleSequelizeError(error);
   }
+
+  const t = await sequelize.transaction();
+
   try {
-    const newParentRecord = getCreateJSON(modelConfig, res);
+    const newParentRecord = await createModel(modelConfig, res, t);
     const parentPrimaryKeyField = findModelPrimaryKeyField(modelConfig);
+    const newParentID: number | string =
+      //@ts-ignore
+      newParentRecord[parentPrimaryKeyField.fieldName];
+
     const newRecords: Record<string, unknown> = {};
 
-    getRelatedSimpleModelJSON(modelConfig, res, newRecords);
+    await createNewRecordsForModelAndSimpleRelationships(
+      modelConfig,
+      newParentID,
+      res,
+      t,
+      newRecords
+    );
 
-    getRelatedModelJSON(modelConfig, res, newRecords);
+    await updateOrCreateRelatedRecords(
+      modelConfig,
+      res,
+      newParentID,
+      t,
+      newRecords
+    );
+
+    await t.commit();
 
     return NextResponse.json({
       status: "success",
-      newRecords,
+      [parentPrimaryKeyField.fieldName]: newParentID,
+      ...newRecords,
     });
   } catch (err) {
+    await t.rollback();
     return handleSequelizeError(err);
   }
-};
+}; */
+
+//TO DO: DELETE route
+/* export const DELETE = async (req: Request) => {
+  const body = (await req.json()) as TaskIntervalDeletePayload;
+  const { deletedTaskIntervals } = body;
+
+  if (deletedTaskIntervals.length > 0) {
+    const t = await sequelize.transaction();
+    try {
+      await deleteModels(modelConfig, deletedTaskIntervals, t);
+      t.commit();
+      return NextResponse.json("success");
+    } catch (error) {
+      t.rollback();
+      return handleSequelizeError(error);
+    }
+  }
+}; */

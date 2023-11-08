@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 export async function middleware(request: NextRequest) {
-  const origin = request.headers.get("origin");
-
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -90,5 +88,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: "/api/:path*",
+  matcher: "/(.*)",
 };

@@ -6,12 +6,14 @@ import {
   findLeftForeignKeyField,
   findRelationshipModelConfig,
 } from "@/utils/utilities";
+import { PostgrestQueryBuilder } from "@supabase/postgrest-js";
 
 export const processURLFilters = (
   filters: string[],
   query: Record<string, string>,
   modelConfig: ModelConfig,
   replacements: Record<string, string>,
+  supQuery: any,
   parentMode?: boolean
 ) => {
   const table = modelConfig.tableName;
@@ -22,9 +24,12 @@ export const processURLFilters = (
     const q = query.q;
     if (q) {
       const fields: string[] = generateQFields(modelConfig);
-      filters.push(
-        `or(${fields.map((field) => `${field}.ilike.*${q}*`).join(",")})`
+      supQuery = supQuery.or(
+        `${fields.map((field) => `${field}.ilike.*${q}*`).join(",")}`
       );
+      /* filters.push(
+        `or(${fields.map((field) => `${field}.ilike.*${q}*`).join(",")})`
+      ); */
     }
   }
 
@@ -60,16 +65,19 @@ export const processURLFilters = (
         if (queryValue || isBetweenDatesFilter) {
           if (filterOperator === "Equal" && dataType === "BOOLEAN" && options) {
             if (queryValue === options[0].fieldValue) {
-              filters.push(`${databaseFieldName}.is.true`);
+              supQuery = supQuery.is(databaseFieldName, true);
+              /* filters.push(`${databaseFieldName}.is.true`); */
             } else {
-              filters.push(`${databaseFieldName}.not.is.true`);
+              supQuery = supQuery.is(databaseFieldName, false);
+              /* filters.push(`${databaseFieldName}.not.is.true`); */
             }
 
             return;
           }
 
           if (filterOperator === "Equal") {
-            filters.push(`${databaseFieldName}.eq.${filterQueryName}`);
+            supQuery = supQuery.eq(databaseFieldName, queryValue);
+            /* filters.push(`${databaseFieldName}.eq.${filterQueryName}`); */
             return;
           }
 
@@ -80,54 +88,28 @@ export const processURLFilters = (
             const dateTo = query[dateToName];
 
             if (dateFrom && dateTo) {
-              filters.push(
+              supQuery = supQuery
+                .gte(filterQueryName, dateFrom)
+                .lte(filterQueryName, dateTo);
+              /* filters.push(
                 `${filterQueryName}.gte.${dateFrom},${filterQueryName}.lte.${dateTo}`
-              );
+              ); */
             }
 
             return;
           }
 
           if (filterOperator === "Not is Null") {
-            filters.push(`${table}.${databaseFieldName}.is.null`);
+            supQuery = supQuery.not(databaseFieldName, "is", null);
+            /* filters.push(`${table}.${databaseFieldName}.is.null`); */
             return;
           }
 
           if (filterOperator === "Is Null") {
-            filters.push(`${table}.${databaseFieldName}.not.is.null`);
+            supQuery = supQuery.is(databaseFieldName, null);
+            /* filters.push(`${table}.${databaseFieldName}.not.is.null`); */
             return;
           }
-
-          //This is pending
-          /* if (
-            filterOperator === "isPresent" &&
-            queryValue === "true" &&
-            seqModelRelationshipID
-          ) {
-            const modelRelationship = findConfigItemObject(
-              AppConfig.relationships,
-              "seqModelRelationshipID",
-              seqModelRelationshipID
-            );
-
-            const relatedModelConfig = findRelationshipModelConfig(
-              seqModelRelationshipID,
-              "LEFT"
-            );
-
-            const leftForeignKeyField = findLeftForeignKeyField(
-              seqModelRelationshipID
-            );
-
-            const relatedModelSQL = getChildModelSQL(
-              query,
-              false,
-              relatedModelConfig
-            );
-
-            sql.joins = [relatedModelJoin];
-            return;
-          } */
         }
       }
     );
