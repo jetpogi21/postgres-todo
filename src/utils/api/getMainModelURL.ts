@@ -11,6 +11,7 @@ import {
 import { findModelPrimaryKeyField } from "@/utils/utilities";
 import { getSort } from "@/utils/utils";
 import { createSupabaseRoute } from "@/lib/supabase/supabase";
+import { getRelatedTableFields } from "@/utils/api/getRelatedTableFields";
 
 export function getMainModelURL(
   query: Record<string, string>,
@@ -26,11 +27,11 @@ export function getMainModelURL(
   const cursor = query["cursor"];
   const limit = query["limit"] || modelConfig.limit || AppConfig.limit || 10;
 
-  const sort = getSortedValueSimplified(query["sort"], modelConfig);
-  const sortField = sort.includes("-") ? sort.substring(1) : sort;
+  const sort = getSortedValueSimplified(query["sort"], modelConfig); //-date
+
+  const sortField = sort.includes("-") ? sort.substring(1) : sort; //date
 
   //Declare the variables
-  /* const table = `${AppConfig.sanitizedAppName}_${modelConfig.tableName}`; */
   const table = modelConfig.tableName;
 
   const primaryKeyField = findModelPrimaryKeyField(modelConfig);
@@ -40,6 +41,10 @@ export function getMainModelURL(
   //build the sql field name and aliases (aliases are used to destructure the object)
   const columns: string[] = [];
   appendFieldsToColumn(fields, columns);
+
+  getRelatedTableFields(modelConfig).forEach((field) => {
+    columns.push(field);
+  });
 
   let supQuery: any = supabase.schema(AppConfig.sanitizedAppName).from(table);
 
@@ -55,7 +60,6 @@ export function getMainModelURL(
 
   //should produce like this
   //actors!inner()&actors.first_name=eq.Jehanne&actors=not.is.null --> if there's a filter involved
-  const joinFields: string[] = [];
 
   //This will be used to store the replacements needed
   let replacements: Record<string, string> = {};
@@ -87,8 +91,6 @@ export function getMainModelURL(
       /* filters.push(`${primaryKeyField.databaseFieldName}=eq.${id}`); */
     }
   }
-
-  /* processSelectJoins(query, dontFilter, modelConfig, joinFields); */
 
   const orderBy = getSort(
     sort,

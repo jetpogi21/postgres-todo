@@ -72,10 +72,7 @@ const TaskFilterForm = <T,>({
   ) => {
     const params = {
       ...query,
-      ...(getParamsObject(
-        values,
-        defaultFilters
-      ) as Partial<TaskSearchParams>),
+      ...(getParamsObject(values, defaultFilters) as Partial<TaskSearchParams>),
     };
 
     setFetchCount(true);
