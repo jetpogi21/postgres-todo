@@ -5,7 +5,6 @@ export function addCursorFilterToURL(
   sort: string,
   sortField: string,
   PRIMARY_KEY: string,
-  filters: string[],
   supQuery: any,
   tableName?: string
 ): void {
@@ -15,10 +14,6 @@ export function addCursorFilterToURL(
   const realPrimaryKey = tableName ? `${PRIMARY_KEY}` : PRIMARY_KEY;
 
   const realSortField = tableName ? `${sortField}` : sortField;
-
-  const addFilter = (condition: string, clause?: string) => {
-    filters.push(clause ? `(${clause})` : condition);
-  };
 
   if (sortField !== PRIMARY_KEY) {
     if (!cursorArray0) {

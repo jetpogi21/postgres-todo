@@ -42,7 +42,7 @@ export function getMainModelURL(
   const columns: string[] = [];
   appendFieldsToColumn(fields, columns);
 
-  getRelatedTableFields(modelConfig).forEach((field) => {
+  getRelatedTableFields(modelConfig, query).forEach((field) => {
     columns.push(field);
   });
 
@@ -60,23 +60,10 @@ export function getMainModelURL(
 
   //should produce like this
   //actors!inner()&actors.first_name=eq.Jehanne&actors=not.is.null --> if there's a filter involved
-
-  //This will be used to store the replacements needed
-  let replacements: Record<string, string> = {};
-
-  const filters: string[] = [];
-
   if (!simpleOnly || simpleOnly !== "true") {
     if (!dontFilter) {
       //After this function there will be new supQuery
-      processURLFilters(
-        filters,
-        query,
-        modelConfig,
-        replacements,
-        supQuery,
-        true
-      );
+      processURLFilters(query, modelConfig, supQuery, true);
     }
   }
 
@@ -104,7 +91,6 @@ export function getMainModelURL(
       sort,
       sortField,
       primaryKeyField.databaseFieldName,
-      filters,
       supQuery,
       table
     );

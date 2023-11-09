@@ -9,12 +9,11 @@ import {
 import { PostgrestQueryBuilder } from "@supabase/postgrest-js";
 
 export const processURLFilters = (
-  filters: string[],
   query: Record<string, string>,
   modelConfig: ModelConfig,
-  replacements: Record<string, string>,
   supQuery: any,
-  parentMode?: boolean
+  parentMode?: boolean,
+  filterQueryNameToGet?: string
 ) => {
   const table = modelConfig.tableName;
 
@@ -34,7 +33,11 @@ export const processURLFilters = (
   }
 
   modelConfig.filters
-    .filter(({ filterQueryName }) => filterQueryName !== "q")
+    .filter(
+      ({ filterQueryName }) =>
+        filterQueryName !== "q" &&
+        (filterQueryNameToGet ? filterQueryName === filterQueryNameToGet : true)
+    )
     .sort((a, b) => a.filterOrder - b.filterOrder)
     .forEach(
       ({
@@ -58,11 +61,29 @@ export const processURLFilters = (
         )!; */
         const databaseFieldName = field?.databaseFieldName;
         const dataType = field?.dataType;
+        const alias = filterQueryNameToGet
+          ? filterQueryNameToGet + modelConfig.modelName
+          : "";
 
         const isBetweenDatesFilter =
           dataType === "DATEONLY" && filterOperator === "Between";
 
         if (queryValue || isBetweenDatesFilter) {
+          if (filterOperator === "isPresent" && seqModelRelationshipID) {
+            //get the leftmodel config
+            const leftModelConfig = findRelationshipModelConfig(
+              seqModelRelationshipID,
+              "LEFT"
+            );
+
+            processURLFilters(
+              query,
+              leftModelConfig,
+              supQuery,
+              false,
+              filterQueryName
+            );
+          }
           if (filterOperator === "Equal" && dataType === "BOOLEAN" && options) {
             if (queryValue === options[0].fieldValue) {
               supQuery = supQuery.is(databaseFieldName, true);
@@ -100,7 +121,14 @@ export const processURLFilters = (
           }
 
           if (filterOperator === "Not is Null") {
-            supQuery = supQuery.not(databaseFieldName, "is", null);
+            //use alias if the filter is based on relationship
+            supQuery = supQuery.not(
+              filterQueryNameToGet
+                ? `${alias}.${databaseFieldName}`
+                : databaseFieldName,
+              "is",
+              null
+            );
             /* filters.push(`${table}.${databaseFieldName}.is.null`); */
             return;
           }
