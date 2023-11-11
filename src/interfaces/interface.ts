@@ -50,3 +50,10 @@ export interface ListQuery {
   simpleOnly: string;
   fetchCount: string;
 }
+
+export interface ChildSQL {
+  [key: string]: {
+    insertStatements: { [key: number]: string };
+    updateStatements: { [key: number]: string };
+  };
+}

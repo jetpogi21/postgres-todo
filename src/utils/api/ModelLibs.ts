@@ -47,7 +47,11 @@ export const getCreateJSON = (
 
 export const getInsertSQL = (
   modelConfig: ModelConfig,
-  payload: Record<string, unknown>
+  payload: Record<string, unknown>,
+  options?: {
+    returnPKOnly?: boolean;
+    fkField?: string;
+  }
 ) => {
   const parsedPayload = createParsedPayload(modelConfig, payload);
 
@@ -55,15 +59,39 @@ export const getInsertSQL = (
   const table = modelConfig.tableName;
   const primaryKeyField =
     findModelPrimaryKeyField(modelConfig).databaseFieldName;
-  const qualifiedFields = Object.keys(parsedPayload).map(
-    (key: string) => `"${key}"`
-  );
 
-  const qualifiedValues = Object.values(parsedPayload).map(
-    (value) => `'${value}'`
-  );
+  const qualifiedFields: string[] = [];
+  const qualifiedValues: string[] = [];
 
-  const sql = `INSERT INTO "${schema}"."${table}" (${qualifiedFields}) VALUES (${qualifiedValues}) RETURNING *`;
+  const fields = modelConfig.fields.filter(({ databaseFieldName }) =>
+    options?.fkField ? databaseFieldName !== options.fkField : true
+  );
+  for (const { databaseFieldName, dataTypeInterface, fieldName } of fields) {
+    const value = parsedPayload[fieldName];
+
+    if (value !== undefined) {
+      qualifiedFields.push(`"${databaseFieldName}"`);
+      if (value === null) {
+        qualifiedValues.push(`NULL`);
+      } else if (dataTypeInterface === "boolean") {
+        qualifiedValues.push(value === "true" ? "TRUE" : "FALSE");
+      } else if (dataTypeInterface !== "number") {
+        qualifiedValues.push(`'${value}'`);
+      } else {
+        qualifiedValues.push(`${value}`);
+      }
+    }
+  }
+
+  const fkField = options?.fkField;
+  if (fkField) {
+    qualifiedFields.push(`"${fkField}"`);
+    qualifiedValues.push("$1");
+  }
+
+  const sql = `INSERT INTO "${schema}"."${table}" (${qualifiedFields}) VALUES (${qualifiedValues}) RETURNING ${
+    options?.returnPKOnly ? primaryKeyField : "*"
+  }`;
 
   return sql;
 };

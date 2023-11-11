@@ -688,13 +688,13 @@ export const findFielToBeInsertedField = (seqModelRelationshipID: number) => {
     seqModelRelationshipID
   );
 
-  const throughModelConfig = findRelationshipModelConfig(
+  const leftModelConfig = findRelationshipModelConfig(
     seqModelRelationshipID,
-    "TROUGH"
+    "LEFT"
   );
 
   return findConfigItemObject(
-    throughModelConfig.fields,
+    leftModelConfig.fields,
     "fieldName",
     relationship.fieldToBeInserted!
   );
