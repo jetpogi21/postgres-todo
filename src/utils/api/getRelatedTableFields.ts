@@ -4,7 +4,8 @@ import { findRelationshipModelConfig } from "@/utils/utilities";
 
 export const getRelatedTableFields = (
   modelConfig: ModelConfig,
-  query: Record<string, string>
+  query: Record<string, string>,
+  primaryKeyValue?: string | number
 ) => {
   const columns: string[] = [];
 
@@ -18,15 +19,27 @@ export const getRelatedTableFields = (
         side
       );
 
-      let column = "";
       const { modelName, tableName, fields, pluralizedModelName } =
         relatedModelConfig;
-      const fieldStr = fields.map(
-        ({ databaseFieldName, fieldName }) =>
-          `${fieldName}:${databaseFieldName}`
-      );
-      const name = side === "LEFT" ? pluralizedModelName : modelName;
-      column += `${name}:${tableName}(${fieldStr})`;
+
+      let column = "";
+      const isPrimaryKey = primaryKeyValue !== undefined;
+      const excludeCondition = isPrimaryKey
+        ? relationship.excludeInForm
+        : relationship.excludeInTable;
+
+      if (!excludeCondition) {
+        const fieldStr = fields.map(({ databaseFieldName, fieldName }) =>
+          fieldName !== databaseFieldName
+            ? `${fieldName}:${databaseFieldName}`
+            : databaseFieldName
+        );
+
+        const name = side === "LEFT" ? pluralizedModelName : modelName;
+        column += `${name}:${tableName}(${fieldStr})`;
+
+        columns.push(column);
+      }
 
       modelConfig.filters
         .filter(
@@ -43,23 +56,21 @@ export const getRelatedTableFields = (
             columns.push(`${alias}:${tableName}!inner()`);
           }
         });
-
-      columns.push(column);
     });
   };
 
   const leftModelRelationships = AppConfig.relationships.filter(
     (relationship) =>
       relationship.leftModelID === modelConfig.seqModelID &&
-      !relationship.excludeInTable
+      (primaryKeyValue
+        ? !relationship.excludeInForm
+        : !relationship.excludeInTable)
   );
 
   processRelationships(leftModelRelationships, "RIGHT");
 
   const rightModelRelationships = AppConfig.relationships.filter(
-    (relationship) =>
-      relationship.rightModelID === modelConfig.seqModelID &&
-      !relationship.excludeInTable
+    (relationship) => relationship.rightModelID === modelConfig.seqModelID
   );
 
   processRelationships(rightModelRelationships, "LEFT");

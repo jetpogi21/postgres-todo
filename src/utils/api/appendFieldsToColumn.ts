@@ -11,6 +11,10 @@ export function appendFieldsToColumn(fields: Field[], columns: string[]): void {
       fieldName = `${field}`;
     }
 
-    columns.push(`${fieldAlias}:${fieldName}`);
+    if (fieldAlias !== fieldName) {
+      columns.push(`${fieldAlias}:${fieldName}`);
+    } else {
+      columns.push(fieldName);
+    }
   });
 }

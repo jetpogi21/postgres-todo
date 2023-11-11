@@ -42,9 +42,11 @@ export function getMainModelURL(
   const columns: string[] = [];
   appendFieldsToColumn(fields, columns);
 
-  getRelatedTableFields(modelConfig, query).forEach((field) => {
-    columns.push(field);
-  });
+  getRelatedTableFields(modelConfig, query, options?.primaryKeyValue).forEach(
+    (field) => {
+      columns.push(field);
+    }
+  );
 
   let supQuery: any = supabase.schema(AppConfig.sanitizedAppName).from(table);
 
@@ -72,10 +74,8 @@ export function getMainModelURL(
     const id = options.primaryKeyValue;
     if (options?.useSlug) {
       supQuery = supQuery.eq("slug", id);
-      /* filters.push(`slug=eq.${id}`); */
     } else {
       supQuery = supQuery.eq(primaryKeyField.databaseFieldName, id);
-      /* filters.push(`${primaryKeyField.databaseFieldName}=eq.${id}`); */
     }
   }
 
@@ -96,8 +96,12 @@ export function getMainModelURL(
     );
   }
 
-  getURLORder(orderBy, supQuery);
-  supQuery.limit(limit);
+  if (options?.primaryKeyValue) {
+    supQuery.limit(1);
+  } else {
+    getURLORder(orderBy, supQuery);
+    supQuery.limit(limit);
+  }
 
   //TO DO: JOINS (filtering, ordering etc.)
   const joins = "";
