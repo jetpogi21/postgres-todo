@@ -55,5 +55,6 @@ export interface ChildSQL {
   [key: string]: {
     insertStatements: { [key: number]: string };
     updateStatements: { [key: number]: string };
+    deleteStatements?: string[];
   };
 }

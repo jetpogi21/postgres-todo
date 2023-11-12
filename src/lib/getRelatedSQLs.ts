@@ -3,9 +3,8 @@ import { ModelConfig } from "@/interfaces/ModelConfig";
 import { ChildSQL } from "@/interfaces/interface";
 import { AppConfig } from "@/lib/app-config";
 import { ModelSchema } from "@/schema/ModelSchema";
-import { getInsertSQL } from "@/utils/api/ModelLibs";
+import { getInsertSQL, getUpdateSQL } from "@/utils/api/ModelLibs";
 import {
-  findConfigItem,
   findModelPrimaryKeyField,
   findRelationshipModelConfig,
 } from "@/utils/utilities";
@@ -51,6 +50,8 @@ export const getRelatedSQLs = async (
               getInsertSQL(leftModelConfig, item, { fkField: leftForeignKey });
           } else {
             //TODO: Update method -> for not new only
+            updateStatements[item.index as keyof typeof updateStatements] =
+              getUpdateSQL(leftModelConfig, item, { fkField: leftForeignKey });
           }
         } catch (e) {
           console.log(e);

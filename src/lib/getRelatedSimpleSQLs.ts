@@ -2,7 +2,10 @@ import { ModelConfig } from "@/interfaces/ModelConfig";
 import { ChildSQL } from "@/interfaces/interface";
 import { AppConfig } from "@/lib/app-config";
 import { getInsertSQL } from "@/utils/api/ModelLibs";
-import { findConfigItem, findRelationshipModelConfig } from "@/utils/utilities";
+import {
+  findModelPrimaryKeyField,
+  findRelationshipModelConfig,
+} from "@/utils/utilities";
 
 export const getRelatedSimpleSQLs = (
   modelConfig: ModelConfig,
@@ -31,7 +34,7 @@ export const getRelatedSimpleSQLs = (
 
       //@ts-ignore
       const newIDs: number[] =
-        body[`new${throughModelConfig.pluralizedVerboseModelName}`];
+        body[`new${throughModelConfig.pluralizedModelName}`];
 
       const rows = newIDs.map((item) => {
         return getInsertSQL(
@@ -41,9 +44,22 @@ export const getRelatedSimpleSQLs = (
         );
       });
 
+      //assuming the deleted row is a number
+      //@ts-ignore
+      const deletedIDs: number[] =
+        body[`deleted${leftModelConfig.pluralizedModelName}`];
+
+      const primaryKeyField =
+        findModelPrimaryKeyField(leftModelConfig).databaseFieldName;
+      const deleteStatements =
+        deletedIDs?.map((item) => {
+          return `DELETE FROM ${leftModelConfig.tableName} WHERE ${primaryKeyField} = ${item}`;
+        }) || [];
+
       sqls[leftModelConfig.pluralizedModelName] = {
         insertStatements: rows,
         updateStatements: {},
+        deleteStatements,
       };
     }
   );

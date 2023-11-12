@@ -5,6 +5,15 @@ import { TaskConfig } from "@/utils/config/TaskConfig";
 import { cookies } from "next/headers";
 import { createSupabaseRoute } from "@/lib/supabase/supabase";
 import { getMainModelURL } from "@/utils/api/getMainModelURL";
+import { ModelSchema } from "@/schema/ModelSchema";
+import { getInsertSQL, getUpdateSQL } from "@/utils/api/ModelLibs";
+import { ChildSQL } from "@/interfaces/interface";
+import { getNewRecordsForRelationships } from "@/lib/getNewRecordsForRelationships";
+import { getNewRecordsForSimpleRelationships } from "@/lib/getNewRecordsForSimpleRelationships";
+import { getRelatedSQLs } from "@/lib/getRelatedSQLs";
+import { getRelatedSimpleSQLs } from "@/lib/getRelatedSimpleSQLs";
+import { findModelPrimaryKeyField } from "@/utils/utilities";
+import { returnJSONResponse } from "@/utils/utils";
 
 const modelConfig = TaskConfig;
 
@@ -40,66 +49,63 @@ export const GET = async (
   }
 };
 
-/* export const PUT = async (
+export const PUT = async (
   req: Request,
   { params }: { params: { id: string } }
 ) => {
-  const res = await req.json();
-  const id = params.id;
+  const cookieStore = cookies();
+  const supabase = createSupabaseRoute(cookieStore);
+
+  const body = await req.json();
 
   try {
-    await ModelSchema(modelConfig).validate(res);
-  } catch (error: any) {
+    await ModelSchema(modelConfig).validate(body);
+  } catch (error) {
+    return handleSequelizeError(error);
+  }
+
+  //Create statement here
+  const mainSQL = getUpdateSQL(modelConfig, body, {
+    returnPKOnly: true,
+    pkValue: params.id,
+  });
+
+  let childSQL: ChildSQL = {};
+
+  const simpleSQLs = getRelatedSimpleSQLs(modelConfig, body);
+
+  childSQL = { ...childSQL, ...simpleSQLs };
+
+  const relatedSQLs = await getRelatedSQLs(modelConfig, body);
+
+  childSQL = { ...childSQL, ...relatedSQLs };
+
+  const { data, error } = await supabase.rpc("upsert_with_children", {
+    main: mainSQL,
+    children: childSQL,
+  });
+
+  if (error) {
     return returnJSONResponse({
       status: "error",
-      errorCode: 401,
       error: error.message,
+      errorCode: 404,
     });
   }
 
-  const t = await sequelize.transaction();
+  const parentPrimaryKeyField =
+    findModelPrimaryKeyField(modelConfig).databaseFieldName;
 
-  try {
-    await updateModel(modelConfig, res, id, t);
+  let newRecords = {};
+  newRecords = {
+    newRecords,
+    ...getNewRecordsForSimpleRelationships(modelConfig, data),
+    ...getNewRecordsForRelationships(modelConfig, data),
+  };
 
-    const newRecords: Record<string, unknown> = {};
-
-    await updateOrCreateRelatedRecords(modelConfig, res, id, t, newRecords);
-
-    await createNewRecordsForModelAndSimpleRelationships(
-      modelConfig,
-      id,
-      res,
-      t,
-      newRecords
-    );
-
-    await deleteRelatedSimpleModels(modelConfig, res, t);
-
-    t.commit();
-    return NextResponse.json({
-      status: "success",
-      ...newRecords,
-    });
-  } catch (err) {
-    t.rollback();
-    return handleSequelizeError(err);
-  }
+  return NextResponse.json({
+    status: "success",
+    [parentPrimaryKeyField]: data["id"],
+    ...newRecords,
+  });
 };
-
-export const DELETE = async (
-  req: Request,
-  { params }: { params: { id: string } }
-) => {
-  const id = params.id;
-  const t = await sequelize.transaction();
-  try {
-    deleteModels(modelConfig, [id], t);
-    t.commit();
-
-    return NextResponse.json({ status: "success" });
-  } catch (err) {
-    t.rollback();
-    return handleSequelizeError(err);
-  }
-}; */

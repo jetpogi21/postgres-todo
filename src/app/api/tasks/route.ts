@@ -96,7 +96,7 @@ export const POST = async (req: Request) => {
 
   childSQL = { ...childSQL, ...relatedSQLs };
 
-  const { data, error } = await supabase.rpc("insert_with_children", {
+  const { data, error } = await supabase.rpc("upsert_with_children", {
     main: mainSQL,
     children: childSQL,
   });
@@ -133,8 +133,6 @@ export const DELETE = async (req: Request) => {
   const body = (await req.json()) as TaskDeletePayload;
   const { deletedTasks } = body;
 
-  console.log(body);
-
   if (deletedTasks.length > 0) {
     const { data, error } = await supabase
       .schema(AppConfig.sanitizedAppName)
@@ -151,21 +149,3 @@ export const DELETE = async (req: Request) => {
 
   return NextResponse.json("success");
 };
-
-//TO DO: DELETE route
-/* export const DELETE = async (req: Request) => {
-  const body = (await req.json()) as TaskIntervalDeletePayload;
-  const { deletedTaskIntervals } = body;
-
-  if (deletedTaskIntervals.length > 0) {
-    const t = await sequelize.transaction();
-    try {
-      await deleteModels(modelConfig, deletedTaskIntervals, t);
-      t.commit();
-      return NextResponse.json("success");
-    } catch (error) {
-      t.rollback();
-      return handleSequelizeError(error);
-    }
-  }
-}; */

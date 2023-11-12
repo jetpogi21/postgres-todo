@@ -99,6 +99,75 @@ export const getInsertSQL = (
 export const getUpdateSQL = (
   modelConfig: ModelConfig,
   payload: Record<string, unknown>,
+  options?: {
+    pkValue?: string;
+    returnPKOnly?: boolean;
+    fkField?: string;
+  }
+) => {
+  const parsedPayload = createParsedPayload(modelConfig, payload);
+
+  const schema = AppConfig.sanitizedAppName;
+  const table = modelConfig.tableName;
+  const primaryKeyField =
+    findModelPrimaryKeyField(modelConfig).databaseFieldName;
+
+  const qualifiedFields: string[] = [];
+  const qualifiedValues: string[] = [];
+
+  const payloadKeys = Object.keys(parsedPayload);
+
+  //Filter the fields to only show all the fields that are on the payload
+  const fields = modelConfig.fields
+    .filter(
+      ({ fieldName, databaseFieldName }) =>
+        payloadKeys.includes(fieldName) && databaseFieldName !== primaryKeyField
+    )
+    .filter(({ databaseFieldName }) =>
+      options?.fkField ? databaseFieldName !== options.fkField : true
+    );
+  for (const { databaseFieldName, dataTypeInterface, fieldName } of fields) {
+    const value = parsedPayload[fieldName];
+
+    if (value !== undefined) {
+      qualifiedFields.push(`"${databaseFieldName}"`);
+      if (value === null) {
+        qualifiedValues.push(`NULL`);
+      } else if (dataTypeInterface === "boolean") {
+        qualifiedValues.push(value === "true" ? "TRUE" : "FALSE");
+      } else if (dataTypeInterface !== "number") {
+        qualifiedValues.push(`'${value}'`);
+      } else {
+        qualifiedValues.push(`${value}`);
+      }
+    }
+  }
+
+  const primaryKeyValue =
+    options?.pkValue || (parsedPayload[primaryKeyField] as string);
+
+  const fkField = options?.fkField;
+  if (fkField) {
+    qualifiedFields.push(`"${fkField}"`);
+    qualifiedValues.push(primaryKeyValue);
+  }
+
+  const setStatements: string[] = qualifiedFields.map((field, idx) => {
+    return `${field} = ${qualifiedValues[idx]}`;
+  });
+
+  const sql = `UPDATE "${schema}"."${table}" SET ${setStatements.join(
+    ","
+  )} WHERE ${primaryKeyField} = ${primaryKeyValue} RETURNING ${
+    options?.returnPKOnly ? primaryKeyField : "*"
+  }`;
+
+  return sql;
+};
+
+/* export const getUpdateSQL = (
+  modelConfig: ModelConfig,
+  payload: Record<string, unknown>,
   primaryKeyValue: string
 ) => {
   const parsedPayload = createParsedPayload(modelConfig, payload);
@@ -116,7 +185,7 @@ export const getUpdateSQL = (
   )} WHERE "${primaryKeyField}" = '${primaryKeyValue}' RETURNING *`;
 
   return sql;
-};
+}; */
 
 /* export const createModel = async (
   modelConfig: ModelConfig,
