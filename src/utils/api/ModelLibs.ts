@@ -134,7 +134,7 @@ export const getUpdateSQL = (
       if (value === null) {
         qualifiedValues.push(`NULL`);
       } else if (dataTypeInterface === "boolean") {
-        qualifiedValues.push(value === "true" ? "TRUE" : "FALSE");
+        qualifiedValues.push(value === true ? "TRUE" : "FALSE");
       } else if (dataTypeInterface !== "number") {
         qualifiedValues.push(`'${value}'`);
       } else {
