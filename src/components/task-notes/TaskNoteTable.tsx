@@ -2,13 +2,13 @@
 "use client";
 import React, { useEffect } from "react";
 import {
-  TaskIntervalFormikInitialValues,
-  TaskIntervalModel,
-  TaskIntervalSearchParams,
-} from "@/interfaces/TaskIntervalInterfaces";
+  TaskNoteFormikInitialValues,
+  TaskNoteModel,
+  TaskNoteSearchParams,
+} from "@/interfaces/TaskNoteInterfaces";
 import { useQueryClient } from "@tanstack/react-query";
 import { UpdateModelsData, useModelsQuery, useUpdateModelsMutation } from "@/hooks/useModelQuery";
-import { TaskIntervalConfig } from "@/utils/config/TaskIntervalConfig";
+import { TaskNoteConfig } from "@/utils/config/TaskNoteConfig";
 import { BasicModel, GetModelsResponse } from "@/interfaces/GeneralInterfaces";
 import { useModelPageParams } from "@/hooks/useModelPageParams";
 import { getCurrentData } from "@/lib/getCurrentData";
@@ -21,19 +21,19 @@ import { toast } from "@/hooks/use-toast";
 import { Formik, FormikHelpers, FormikProps } from "formik";
 import { ModelSchema } from "@/schema/ModelSchema";
 import useGlobalDialog from "@/hooks/useGlobalDialog";
-import TaskIntervalForm from "@/components/task-intervals/TaskIntervalForm";
+import TaskNoteForm from "@/components/task-notes/TaskNoteForm";
 import { Row } from "@tanstack/react-table";
 import { findModelPrimaryKeyField } from "@/utils/utilities";
 
-const TaskIntervalTable = <T,>({
+const TaskNoteTable = <T,>({
   tableStates,
 }: {
   tableStates: ReturnType<typeof useTableProps<T>>;
 }) => {
-  const modelConfig = TaskIntervalConfig;
+  const modelConfig = TaskNoteConfig;
   const primaryKeyFieldName = findModelPrimaryKeyField(modelConfig).fieldName;
   const { pluralizedModelName } = modelConfig;
-  const pageParams = useModelPageParams<TaskIntervalSearchParams>(modelConfig);
+  const pageParams = useModelPageParams<TaskNoteSearchParams>(modelConfig);
   const { params } = pageParams;
   const queryClient = useQueryClient();
 
@@ -62,13 +62,13 @@ const TaskIntervalTable = <T,>({
 
   const queryParams = params;
 
-  const useTaskIntervalSearchQuery = () =>
+  const useTaskNoteSearchQuery = () =>
     useModelsQuery<T>(modelConfig, {
       ...queryParams,
       fetchCount: fetchCount.toString(),
     });
 
-  const queryResponse = useTaskIntervalSearchQuery();
+  const queryResponse = useTaskNoteSearchQuery();
   const { data, refetch, isFetching } = queryResponse;
 
   const currentPageData: GetModelsResponse<T> | null = data
@@ -90,12 +90,12 @@ const TaskIntervalTable = <T,>({
 
   //Add any required mutations here
   /* 
-  const addTaskIntervalsFromTemplateMutation =
-    useImportTaskIntervalFromTemplate((data) => {
+  const addTaskNotesFromTemplateMutation =
+    useImportTaskNoteFromTemplate((data) => {
       refetchQuery(0);
     });
   const modelActions = {
-    "Add Form Templates": addTaskIntervalsFromTemplateMutation,
+    "Add Form Templates": addTaskNotesFromTemplateMutation,
   }; 
   */
   const modelActions = undefined;
@@ -104,7 +104,7 @@ const TaskIntervalTable = <T,>({
     useUpdateModelsMutation(modelConfig);
   const rowActions = undefined;
   /* 
-  const rowActions = getTaskIntervalRowActions({
+  const rowActions = getTaskNoteRowActions({
     currentData,
     setCurrentData,
     mutate: updateRecords,
@@ -119,12 +119,12 @@ const TaskIntervalTable = <T,>({
   >();
   */
 
-  const handleSubmit = async (values: TaskIntervalFormikInitialValues, formik: FormikHelpers<TaskIntervalFormikInitialValues>) => {
+  const handleSubmit = async (values: TaskNoteFormikInitialValues, formik: FormikHelpers<TaskNoteFormikInitialValues>) => {
     //The reference is the index of the row
     const rowsToBeSubmitted = (
       values[
-        pluralizedModelName as keyof TaskIntervalFormikInitialValues
-      ] as TaskIntervalFormikInitialValues["TaskIntervals"]
+        pluralizedModelName as keyof TaskNoteFormikInitialValues
+      ] as TaskNoteFormikInitialValues["TaskNotes"]
     ).filter((item) => item.touched);
 
     if (rowsToBeSubmitted.length === 0) {
@@ -142,17 +142,17 @@ const TaskIntervalTable = <T,>({
     //@ts-ignore
     asyncUpdateRecords(payload).then((data) => {
       const { inserted, updated } =
-        data as unknown as UpdateModelsData<TaskIntervalModel>;
+        data as unknown as UpdateModelsData<TaskNoteModel>;
 
       Object.keys(inserted).forEach((idx) => {
         const numIdx = idx as unknown as number;
         formik.setFieldValue(`${pluralizedModelName}[${idx}]`, {
           ...values[
-            pluralizedModelName as keyof TaskIntervalFormikInitialValues
+            pluralizedModelName as keyof TaskNoteFormikInitialValues
           ][numIdx],
           touched: false,
           [primaryKeyFieldName]:
-            inserted[numIdx][primaryKeyFieldName as keyof TaskIntervalModel],
+            inserted[numIdx][primaryKeyFieldName as keyof TaskNoteModel],
         });
       });
 
@@ -172,8 +172,8 @@ const TaskIntervalTable = <T,>({
       title: `${modelConfig.verboseModelName} Form`,
       message: (
         <div className="pt-8">
-          <TaskIntervalForm
-            data={(row ? row : null) as TaskIntervalModel | null}
+          <TaskNoteForm
+            data={(row ? row : null) as TaskNoteModel | null}
             id={
               row
                 ? (row[primaryKeyFieldName as keyof typeof row] as string)
@@ -239,7 +239,7 @@ const TaskIntervalTable = <T,>({
         initialValues={
           {
             [pluralizedModelName]: currentData,
-          } as unknown as TaskIntervalFormikInitialValues
+          } as unknown as TaskNoteFormikInitialValues
         }
         enableReinitialize={true}
         onSubmit={handleSubmit}
@@ -257,4 +257,4 @@ const TaskIntervalTable = <T,>({
   );
 };
 
-export default TaskIntervalTable;
+export default TaskNoteTable;

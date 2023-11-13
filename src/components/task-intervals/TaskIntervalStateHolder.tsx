@@ -4,14 +4,10 @@ import TaskIntervalFilterForm from "@/components/task-intervals/TaskIntervalFilt
 import TaskIntervalTable from "@/components/task-intervals/TaskIntervalTable";
 import { useTableProps } from "@/hooks/useTableProps";
 import { ModelConfig } from "@/interfaces/ModelConfig";
-import TaskIntervalModel from "@/models/TaskIntervalModel";
+import { TaskIntervalModel } from "@/interfaces/TaskIntervalInterfaces";
 import React from "react";
 
-const TaskIntervalStateHolder = ({
-  modelConfig,
-}: {
-  modelConfig: ModelConfig;
-}) => {
+const TaskIntervalStateHolder = ({ modelConfig }: { modelConfig: ModelConfig }) => {
   const tableStates = useTableProps<TaskIntervalModel>(modelConfig);
   return (
     <>
