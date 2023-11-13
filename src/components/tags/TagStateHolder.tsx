@@ -4,14 +4,10 @@ import TagFilterForm from "@/components/tags/TagFilterForm";
 import TagTable from "@/components/tags/TagTable";
 import { useTableProps } from "@/hooks/useTableProps";
 import { ModelConfig } from "@/interfaces/ModelConfig";
-import TagModel from "@/models/TagModel";
+import { TagModel } from "@/interfaces/TagInterfaces";
 import React from "react";
 
-const TagStateHolder = ({
-  modelConfig,
-}: {
-  modelConfig: ModelConfig;
-}) => {
+const TagStateHolder = ({ modelConfig }: { modelConfig: ModelConfig }) => {
   const tableStates = useTableProps<TagModel>(modelConfig);
   return (
     <>

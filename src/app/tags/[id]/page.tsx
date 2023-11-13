@@ -13,21 +13,6 @@ export const metadata = {
   title: modelConfig.verboseModelName + " Form",
 };
 
-async function getData(id: string) {
-  const res = await fetch(
-    process.env.NEXT_PUBLIC_DOMAIN + "/api/" + modelConfig.modelPath + "/" + id,
-    {
-      cache: "no-store",
-    }
-  );
-
-  if (!res.ok) {
-    throw notFound();
-  }
-
-  return res.json();
-}
-
 const TagFormPage = async ({ params }: { params: { id: string } }) => {
   let data = null;
 
@@ -43,8 +28,6 @@ const TagFormPage = async ({ params }: { params: { id: string } }) => {
 
     try {
       const { data: result, error } = await supQuery.single();
-
-      console.log({ result, error });
 
       if (error) {
         console.log(error);
