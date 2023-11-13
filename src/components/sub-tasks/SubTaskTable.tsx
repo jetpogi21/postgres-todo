@@ -2,17 +2,17 @@
 "use client";
 import React, { useEffect } from "react";
 import {
-  TaskFormikInitialValues,
-  TaskModel,
-  TaskSearchParams,
-} from "@/interfaces/TaskInterfaces";
+  SubTaskFormikInitialValues,
+  SubTaskModel,
+  SubTaskSearchParams,
+} from "@/interfaces/SubTaskInterfaces";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   UpdateModelsData,
   useModelsQuery,
   useUpdateModelsMutation,
 } from "@/hooks/useModelQuery";
-import { TaskConfig } from "@/utils/config/TaskConfig";
+import { SubTaskConfig } from "@/utils/config/SubTaskConfig";
 import { BasicModel, GetModelsResponse } from "@/interfaces/GeneralInterfaces";
 import { useModelPageParams } from "@/hooks/useModelPageParams";
 import { getCurrentData } from "@/lib/getCurrentData";
@@ -25,20 +25,19 @@ import { toast } from "@/hooks/use-toast";
 import { Formik, FormikHelpers, FormikProps } from "formik";
 import { ModelSchema } from "@/schema/ModelSchema";
 import useGlobalDialog from "@/hooks/useGlobalDialog";
-import TaskForm from "@/components/tasks/TaskForm";
+import SubTaskForm from "@/components/sub-tasks/SubTaskForm";
 import { Row } from "@tanstack/react-table";
 import { findModelPrimaryKeyField } from "@/utils/utilities";
-import TaskSingleColumn from "@/components/tasks/TaskSingleColumn";
 
-const TaskTable = <T,>({
+const SubTaskTable = <T,>({
   tableStates,
 }: {
   tableStates: ReturnType<typeof useTableProps<T>>;
 }) => {
-  const modelConfig = TaskConfig;
+  const modelConfig = SubTaskConfig;
   const primaryKeyFieldName = findModelPrimaryKeyField(modelConfig).fieldName;
   const { pluralizedModelName } = modelConfig;
-  const pageParams = useModelPageParams<TaskSearchParams>(modelConfig);
+  const pageParams = useModelPageParams<SubTaskSearchParams>(modelConfig);
   const { params } = pageParams;
   const queryClient = useQueryClient();
 
@@ -67,13 +66,13 @@ const TaskTable = <T,>({
 
   const queryParams = params;
 
-  const useTaskSearchQuery = () =>
+  const useSubTaskSearchQuery = () =>
     useModelsQuery<T>(modelConfig, {
       ...queryParams,
       fetchCount: fetchCount.toString(),
     });
 
-  const queryResponse = useTaskSearchQuery();
+  const queryResponse = useSubTaskSearchQuery();
   const { data, refetch, isFetching } = queryResponse;
 
   const currentPageData: GetModelsResponse<T> | null = data
@@ -95,12 +94,12 @@ const TaskTable = <T,>({
 
   //Add any required mutations here
   /* 
-  const addTasksFromTemplateMutation =
-    useImportTaskFromTemplate((data) => {
+  const addSubTasksFromTemplateMutation =
+    useImportSubTaskFromTemplate((data) => {
       refetchQuery(0);
     });
   const modelActions = {
-    "Add Form Templates": addTasksFromTemplateMutation,
+    "Add Form Templates": addSubTasksFromTemplateMutation,
   }; 
   */
   const modelActions = undefined;
@@ -109,7 +108,7 @@ const TaskTable = <T,>({
     useUpdateModelsMutation(modelConfig);
   const rowActions = undefined;
   /* 
-  const rowActions = getTaskRowActions({
+  const rowActions = getSubTaskRowActions({
     currentData,
     setCurrentData,
     mutate: updateRecords,
@@ -125,14 +124,14 @@ const TaskTable = <T,>({
   */
 
   const handleSubmit = async (
-    values: TaskFormikInitialValues,
-    formik: FormikHelpers<TaskFormikInitialValues>
+    values: SubTaskFormikInitialValues,
+    formik: FormikHelpers<SubTaskFormikInitialValues>
   ) => {
     //The reference is the index of the row
     const rowsToBeSubmitted = (
       values[
-        pluralizedModelName as keyof TaskFormikInitialValues
-      ] as TaskFormikInitialValues["Tasks"]
+        pluralizedModelName as keyof SubTaskFormikInitialValues
+      ] as SubTaskFormikInitialValues["SubTasks"]
     ).filter((item) => item.touched);
 
     if (rowsToBeSubmitted.length === 0) {
@@ -150,17 +149,17 @@ const TaskTable = <T,>({
     //@ts-ignore
     asyncUpdateRecords(payload).then((data) => {
       const { inserted, updated } =
-        data as unknown as UpdateModelsData<TaskModel>;
+        data as unknown as UpdateModelsData<SubTaskModel>;
 
       Object.keys(inserted).forEach((idx) => {
         const numIdx = idx as unknown as number;
         formik.setFieldValue(`${pluralizedModelName}[${idx}]`, {
-          ...values[pluralizedModelName as keyof TaskFormikInitialValues][
+          ...values[pluralizedModelName as keyof SubTaskFormikInitialValues][
             numIdx
           ],
           touched: false,
           [primaryKeyFieldName]:
-            inserted[numIdx][primaryKeyFieldName as keyof TaskModel],
+            inserted[numIdx][primaryKeyFieldName as keyof SubTaskModel],
         });
       });
 
@@ -179,8 +178,8 @@ const TaskTable = <T,>({
       title: `${modelConfig.verboseModelName} Form`,
       message: (
         <div className="pt-8">
-          <TaskForm
-            data={(row ? row : null) as TaskModel | null}
+          <SubTaskForm
+            data={(row ? row : null) as SubTaskModel | null}
             id={
               row
                 ? (row[primaryKeyFieldName as keyof typeof row] as string)
@@ -227,7 +226,7 @@ const TaskTable = <T,>({
     pageParams,
     rowActions,
     modelActions,
-    SingleColumnComponent: TaskSingleColumn,
+    SingleColumnComponent: undefined,
     requiredList,
     defaultFormValue,
     columnOrderToOverride,
@@ -246,7 +245,7 @@ const TaskTable = <T,>({
         initialValues={
           {
             [pluralizedModelName]: currentData,
-          } as unknown as TaskFormikInitialValues
+          } as unknown as SubTaskFormikInitialValues
         }
         enableReinitialize={true}
         onSubmit={handleSubmit}
@@ -264,4 +263,4 @@ const TaskTable = <T,>({
   );
 };
 
-export default TaskTable;
+export default SubTaskTable;
