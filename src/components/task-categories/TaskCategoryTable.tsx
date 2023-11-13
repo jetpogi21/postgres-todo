@@ -7,11 +7,7 @@ import {
   TaskCategorySearchParams,
 } from "@/interfaces/TaskCategoryInterfaces";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  UpdateModelsData,
-  useModelsQuery,
-  useUpdateModelsMutation,
-} from "@/hooks/useModelQuery";
+import { UpdateModelsData, useModelsQuery, useUpdateModelsMutation } from "@/hooks/useModelQuery";
 import { TaskCategoryConfig } from "@/utils/config/TaskCategoryConfig";
 import { BasicModel, GetModelsResponse } from "@/interfaces/GeneralInterfaces";
 import { useModelPageParams } from "@/hooks/useModelPageParams";
@@ -123,10 +119,7 @@ const TaskCategoryTable = <T,>({
   >();
   */
 
-  const handleSubmit = async (
-    values: TaskCategoryFormikInitialValues,
-    formik: FormikHelpers<TaskCategoryFormikInitialValues>
-  ) => {
+  const handleSubmit = async (values: TaskCategoryFormikInitialValues, formik: FormikHelpers<TaskCategoryFormikInitialValues>) => {
     //The reference is the index of the row
     const rowsToBeSubmitted = (
       values[
@@ -169,8 +162,9 @@ const TaskCategoryTable = <T,>({
         description: `${modelConfig.pluralizedVerboseModelName} successfully updated`,
       });
     });
+    
   };
-
+ 
   const { openDialog, closeDialog } = useGlobalDialog();
 
   const openDialogHandler = (row?: Row<T>["original"]) => {
@@ -202,7 +196,7 @@ const TaskCategoryTable = <T,>({
 
   /* const columnOrderToOverride: [string, number][] = [["isFinished", 2]]; */
   const columnOrderToOverride = undefined;
-
+  
   useEffect(() => {
     setMounted(true);
     return () => {
@@ -252,14 +246,12 @@ const TaskCategoryTable = <T,>({
         validationSchema={ModelSchema(modelConfig, true)}
         validateOnChange={false}
       >
-        {(formik) => {
-          return (
-            <ModelDataTable
-              {...commonProps}
-              formik={formik as unknown as FormikProps<T>}
-            />
-          );
-        }}
+        {(formik) => (
+          <ModelDataTable
+            {...commonProps}
+            formik={formik as unknown as FormikProps<T>}
+          />
+        )}
       </Formik>
     ))
   );

@@ -7,13 +7,8 @@ import { ModelConfig } from "@/interfaces/ModelConfig";
 import { TaskCategoryModel } from "@/interfaces/TaskCategoryInterfaces";
 import React from "react";
 
-const TaskCategoryStateHolder = ({
-  modelConfig,
-}: {
-  modelConfig: ModelConfig;
-}) => {
+const TaskCategoryStateHolder = ({ modelConfig }: { modelConfig: ModelConfig }) => {
   const tableStates = useTableProps<TaskCategoryModel>(modelConfig);
-
   return (
     <>
       <div className="flex">
