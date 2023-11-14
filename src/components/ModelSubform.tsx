@@ -591,6 +591,7 @@ const ModelSubform = <T,>({
 
       <div className="border rounded-md">
         <DataTable
+          modelConfig={modelConfig}
           table={modelTable}
           isLoading={false}
           draggableField={draggableField}

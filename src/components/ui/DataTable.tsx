@@ -77,7 +77,7 @@ export function DataTable<T>(props: DataTableProps<T>) {
         ))}
       </TableHeader>
       <TableBody>
-        {isLoading || isFetching ? (
+        {isLoading ? (
           <TableRow>
             <TableCell
               colSpan={table.getVisibleFlatColumns().length}
