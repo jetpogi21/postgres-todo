@@ -478,6 +478,7 @@ const ModelDataTable = <T, U, V>({
 
         <div className="border rounded-md">
           <DataTable
+            modelConfig={modelConfig}
             table={modelTable}
             isLoading={isLoading}
             isFetching={isFetching}

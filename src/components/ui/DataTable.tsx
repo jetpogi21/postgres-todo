@@ -19,6 +19,7 @@ export interface DialogFormProps<T> {
 }
 
 interface DataTableProps<T> {
+  modelConfig: ModelConfig;
   table: TTable<T>;
   isLoading: boolean;
   draggableField?: ModelConfig["fields"][number];
@@ -30,6 +31,7 @@ interface DataTableProps<T> {
 
 export function DataTable<T>(props: DataTableProps<T>) {
   const {
+    modelConfig,
     table,
     isLoading,
     draggableField,
@@ -138,38 +140,40 @@ export function DataTable<T>(props: DataTableProps<T>) {
           </TableRow>
         )}
       </TableBody>
-      <TableFooter>
-        {table.getFooterGroups().map((footerGroup) => (
-          <TableRow key={footerGroup.id}>
-            {draggableField && <TableHead className="w-[50px]"></TableHead>}
-            {footerGroup.headers.map((header) => {
-              //@ts-ignore
-              const customWidth = header.column.columnDef.meta?.width;
-              return (
-                <TableHead
-                  key={header.id}
-                  className={cn({
-                    "w-[50px]": ["select", "actions"].includes(header.id),
-                  })}
-                  style={{
-                    width: `${customWidth}px`,
-                  }}
-                  align={
-                    (header.column.columnDef.meta as any)?.alignment || "left"
-                  }
-                >
-                  {header.isPlaceholder
-                    ? null
-                    : flexRender(
-                        header.column.columnDef.footer,
-                        header.getContext()
-                      )}
-                </TableHead>
-              );
-            })}
-          </TableRow>
-        ))}
-      </TableFooter>
+      {modelConfig.fields.some((field) => field.summarizedBy) && (
+        <TableFooter>
+          {table.getFooterGroups().map((footerGroup) => (
+            <TableRow key={footerGroup.id}>
+              {draggableField && <TableHead className="w-[50px]"></TableHead>}
+              {footerGroup.headers.map((header) => {
+                //@ts-ignore
+                const customWidth = header.column.columnDef.meta?.width;
+                return (
+                  <TableHead
+                    key={header.id}
+                    className={cn({
+                      "w-[50px]": ["select", "actions"].includes(header.id),
+                    })}
+                    style={{
+                      width: `${customWidth}px`,
+                    }}
+                    align={
+                      (header.column.columnDef.meta as any)?.alignment || "left"
+                    }
+                  >
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.footer,
+                          header.getContext()
+                        )}
+                  </TableHead>
+                );
+              })}
+            </TableRow>
+          ))}
+        </TableFooter>
+      )}
     </Table>
   );
 }
