@@ -30,6 +30,8 @@ import { Row } from "@tanstack/react-table";
 import { findModelPrimaryKeyField } from "@/utils/utilities";
 import TaskSingleColumn from "@/components/tasks/TaskSingleColumn";
 import { useGenericMutation } from "@/hooks/useGenericMutation";
+import { getTaskRowActions } from "@/lib/tasks/getTaskRowActions";
+import { getTaskColumnsToBeOverriden } from "@/lib/tasks/getTaskColumnsToBeOverriden";
 
 const TaskTable = <T,>({
   tableStates,
@@ -119,8 +121,13 @@ const TaskTable = <T,>({
 
   const { mutate: updateRecords, mutateAsync: asyncUpdateRecords } =
     useUpdateModelsMutation(modelConfig);
-  const rowActions = undefined;
+  const rowActions = getTaskRowActions({
+    currentData,
+    setCurrentData,
+    mutate: updateRecords,
+  });
   /* 
+  Run WriteToGetmodelrowaction_tsx - getModelRowAction.tsx
   const rowActions = getTaskRowActions({
     currentData,
     setCurrentData,
@@ -128,8 +135,9 @@ const TaskTable = <T,>({
   }); 
   */
 
-  const columnsToBeOverriden = undefined;
+  const columnsToBeOverriden = getTaskColumnsToBeOverriden<T, unknown>();
   /* 
+  Run WriteToGetmodelcolumnstobeoverriden_tsx - getModelColumnsToBeOverriden.tsx
   const columnsToBeOverriden = getTaskColumnsToBeOverriden<
     T,
     unknown
@@ -213,8 +221,8 @@ const TaskTable = <T,>({
 
   const dialogFormProps = { openDialogHandler };
 
-  /* const columnOrderToOverride: [string, number][] = [["isFinished", 2]]; */
-  const columnOrderToOverride = undefined;
+  const columnOrderToOverride: [string, number][] = [["isFinished", 2]];
+  /* const columnOrderToOverride = undefined; */
 
   useEffect(() => {
     setMounted(true);
