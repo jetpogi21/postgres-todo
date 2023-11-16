@@ -7,7 +7,11 @@ import {
   TaskSearchParams,
 } from "@/interfaces/TaskInterfaces";
 import { useQueryClient } from "@tanstack/react-query";
-import { UpdateModelsData, useModelsQuery, useUpdateModelsMutation } from "@/hooks/useModelQuery";
+import {
+  UpdateModelsData,
+  useModelsQuery,
+  useUpdateModelsMutation,
+} from "@/hooks/useModelQuery";
 import { TaskConfig } from "@/utils/config/TaskConfig";
 import { BasicModel, GetModelsResponse } from "@/interfaces/GeneralInterfaces";
 import { useModelPageParams } from "@/hooks/useModelPageParams";
@@ -26,6 +30,8 @@ import { Row } from "@tanstack/react-table";
 import { findModelPrimaryKeyField } from "@/utils/utilities";
 import TaskSingleColumn from "@/components/tasks/TaskSingleColumn";
 import { useGenericMutation } from "@/hooks/useGenericMutation";
+import { getTaskRowActions } from "@/lib/tasks/getTaskRowActions";
+import { getTaskColumnsToBeOverriden } from "@/lib/tasks/getTaskColumnsToBeOverriden";
 
 const TaskTable = <T,>({
   tableStates,
@@ -100,7 +106,7 @@ const TaskTable = <T,>({
     "Add Form Templates": addTasksFromTemplateMutation,
   }; 
   */
-  
+
   //This would produce the same shape as the modelActions above.
   const modelActions = modelConfig.hooks.reduce((prev, cur) => {
     const endPoint = `/${modelConfig.modelPath}/${cur.slug}/`;
@@ -115,7 +121,11 @@ const TaskTable = <T,>({
 
   const { mutate: updateRecords, mutateAsync: asyncUpdateRecords } =
     useUpdateModelsMutation(modelConfig);
-  const rowActions = undefined;
+  const rowActions = getTaskRowActions({
+    currentData,
+    setCurrentData,
+    mutate: updateRecords,
+  });
   /* 
   Run WriteToGetmodelrowaction_tsx - getModelRowAction.tsx
   const rowActions = getTaskRowActions({
@@ -125,7 +135,7 @@ const TaskTable = <T,>({
   }); 
   */
 
-  const columnsToBeOverriden = undefined;
+  const columnsToBeOverriden = getTaskColumnsToBeOverriden<T, unknown>();
   /* 
   Run WriteToGetmodelcolumnstobeoverriden_tsx - getModelColumnsToBeOverriden.tsx
   const columnsToBeOverriden = getTaskColumnsToBeOverriden<
@@ -134,7 +144,10 @@ const TaskTable = <T,>({
   >();
   */
 
-  const handleSubmit = async (values: TaskFormikInitialValues, formik: FormikHelpers<TaskFormikInitialValues>) => {
+  const handleSubmit = async (
+    values: TaskFormikInitialValues,
+    formik: FormikHelpers<TaskFormikInitialValues>
+  ) => {
     //The reference is the index of the row
     const rowsToBeSubmitted = (
       values[
@@ -162,9 +175,9 @@ const TaskTable = <T,>({
       Object.keys(inserted).forEach((idx) => {
         const numIdx = idx as unknown as number;
         formik.setFieldValue(`${pluralizedModelName}[${idx}]`, {
-          ...values[
-            pluralizedModelName as keyof TaskFormikInitialValues
-          ][numIdx],
+          ...values[pluralizedModelName as keyof TaskFormikInitialValues][
+            numIdx
+          ],
           touched: false,
           [primaryKeyFieldName]:
             inserted[numIdx][primaryKeyFieldName as keyof TaskModel],
@@ -177,9 +190,8 @@ const TaskTable = <T,>({
         description: `${modelConfig.pluralizedVerboseModelName} successfully updated`,
       });
     });
-    
   };
- 
+
   const { openDialog, closeDialog } = useGlobalDialog();
 
   const openDialogHandler = (row?: Row<T>["original"]) => {
@@ -209,9 +221,9 @@ const TaskTable = <T,>({
 
   const dialogFormProps = { openDialogHandler };
 
-  /* const columnOrderToOverride: [string, number][] = [["isFinished", 2]]; */
-  const columnOrderToOverride = undefined;
-  
+  const columnOrderToOverride: [string, number][] = [["isFinished", 2]];
+  /* const columnOrderToOverride = undefined; */
+
   useEffect(() => {
     setMounted(true);
     return () => {
