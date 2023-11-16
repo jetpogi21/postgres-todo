@@ -24,6 +24,8 @@ import useGlobalDialog from "@/hooks/useGlobalDialog";
 import TaskNoteForm from "@/components/task-notes/TaskNoteForm";
 import { Row } from "@tanstack/react-table";
 import { findModelPrimaryKeyField } from "@/utils/utilities";
+import TaskNoteSingleColumn from "@/components/task-notes/TaskNoteSingleColumn";
+import { useGenericMutation } from "@/hooks/useGenericMutation";
 
 const TaskNoteTable = <T,>({
   tableStates,
@@ -98,12 +100,24 @@ const TaskNoteTable = <T,>({
     "Add Form Templates": addTaskNotesFromTemplateMutation,
   }; 
   */
-  const modelActions = undefined;
+  
+  //This would produce the same shape as the modelActions above.
+  const modelActions = modelConfig.hooks.reduce((prev, cur) => {
+    const endPoint = `/${modelConfig.modelPath}/${cur.slug}/`;
+    return {
+      ...prev,
+      [cur.caption]: useGenericMutation({
+        endPoint,
+        onSuccess: (data) => refetchQuery(0),
+      }),
+    };
+  }, {});
 
   const { mutate: updateRecords, mutateAsync: asyncUpdateRecords } =
     useUpdateModelsMutation(modelConfig);
   const rowActions = undefined;
   /* 
+  Run WriteToGetmodelrowaction_tsx - getModelRowAction.tsx
   const rowActions = getTaskNoteRowActions({
     currentData,
     setCurrentData,
@@ -113,6 +127,7 @@ const TaskNoteTable = <T,>({
 
   const columnsToBeOverriden = undefined;
   /* 
+  Run WriteToGetmodelcolumnstobeoverriden_tsx - getModelColumnsToBeOverriden.tsx
   const columnsToBeOverriden = getTaskColumnsToBeOverriden<
     T,
     unknown
@@ -220,7 +235,7 @@ const TaskNoteTable = <T,>({
     pageParams,
     rowActions,
     modelActions,
-    SingleColumnComponent: undefined,
+    SingleColumnComponent: TaskNoteSingleColumn,
     requiredList,
     defaultFormValue,
     columnOrderToOverride,

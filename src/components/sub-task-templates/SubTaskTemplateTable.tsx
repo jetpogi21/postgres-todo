@@ -7,11 +7,7 @@ import {
   SubTaskTemplateSearchParams,
 } from "@/interfaces/SubTaskTemplateInterfaces";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  UpdateModelsData,
-  useModelsQuery,
-  useUpdateModelsMutation,
-} from "@/hooks/useModelQuery";
+import { UpdateModelsData, useModelsQuery, useUpdateModelsMutation } from "@/hooks/useModelQuery";
 import { SubTaskTemplateConfig } from "@/utils/config/SubTaskTemplateConfig";
 import { BasicModel, GetModelsResponse } from "@/interfaces/GeneralInterfaces";
 import { useModelPageParams } from "@/hooks/useModelPageParams";
@@ -28,6 +24,8 @@ import useGlobalDialog from "@/hooks/useGlobalDialog";
 import SubTaskTemplateForm from "@/components/sub-task-templates/SubTaskTemplateForm";
 import { Row } from "@tanstack/react-table";
 import { findModelPrimaryKeyField } from "@/utils/utilities";
+import SubTaskTemplateSingleColumn from "@/components/sub-task-templates/SubTaskTemplateSingleColumn";
+import { useGenericMutation } from "@/hooks/useGenericMutation";
 
 const SubTaskTemplateTable = <T,>({
   tableStates,
@@ -37,8 +35,7 @@ const SubTaskTemplateTable = <T,>({
   const modelConfig = SubTaskTemplateConfig;
   const primaryKeyFieldName = findModelPrimaryKeyField(modelConfig).fieldName;
   const { pluralizedModelName } = modelConfig;
-  const pageParams =
-    useModelPageParams<SubTaskTemplateSearchParams>(modelConfig);
+  const pageParams = useModelPageParams<SubTaskTemplateSearchParams>(modelConfig);
   const { params } = pageParams;
   const queryClient = useQueryClient();
 
@@ -103,12 +100,24 @@ const SubTaskTemplateTable = <T,>({
     "Add Form Templates": addSubTaskTemplatesFromTemplateMutation,
   }; 
   */
-  const modelActions = undefined;
+  
+  //This would produce the same shape as the modelActions above.
+  const modelActions = modelConfig.hooks.reduce((prev, cur) => {
+    const endPoint = `/${modelConfig.modelPath}/${cur.slug}/`;
+    return {
+      ...prev,
+      [cur.caption]: useGenericMutation({
+        endPoint,
+        onSuccess: (data) => refetchQuery(0),
+      }),
+    };
+  }, {});
 
   const { mutate: updateRecords, mutateAsync: asyncUpdateRecords } =
     useUpdateModelsMutation(modelConfig);
   const rowActions = undefined;
   /* 
+  Run WriteToGetmodelrowaction_tsx - getModelRowAction.tsx
   const rowActions = getSubTaskTemplateRowActions({
     currentData,
     setCurrentData,
@@ -118,16 +127,14 @@ const SubTaskTemplateTable = <T,>({
 
   const columnsToBeOverriden = undefined;
   /* 
+  Run WriteToGetmodelcolumnstobeoverriden_tsx - getModelColumnsToBeOverriden.tsx
   const columnsToBeOverriden = getTaskColumnsToBeOverriden<
     T,
     unknown
   >();
   */
 
-  const handleSubmit = async (
-    values: SubTaskTemplateFormikInitialValues,
-    formik: FormikHelpers<SubTaskTemplateFormikInitialValues>
-  ) => {
+  const handleSubmit = async (values: SubTaskTemplateFormikInitialValues, formik: FormikHelpers<SubTaskTemplateFormikInitialValues>) => {
     //The reference is the index of the row
     const rowsToBeSubmitted = (
       values[
@@ -170,8 +177,9 @@ const SubTaskTemplateTable = <T,>({
         description: `${modelConfig.pluralizedVerboseModelName} successfully updated`,
       });
     });
+    
   };
-
+ 
   const { openDialog, closeDialog } = useGlobalDialog();
 
   const openDialogHandler = (row?: Row<T>["original"]) => {
@@ -203,7 +211,7 @@ const SubTaskTemplateTable = <T,>({
 
   /* const columnOrderToOverride: [string, number][] = [["isFinished", 2]]; */
   const columnOrderToOverride = undefined;
-
+  
   useEffect(() => {
     setMounted(true);
     return () => {
@@ -227,7 +235,7 @@ const SubTaskTemplateTable = <T,>({
     pageParams,
     rowActions,
     modelActions,
-    SingleColumnComponent: undefined,
+    SingleColumnComponent: SubTaskTemplateSingleColumn,
     requiredList,
     defaultFormValue,
     columnOrderToOverride,

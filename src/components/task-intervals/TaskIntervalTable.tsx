@@ -24,6 +24,8 @@ import useGlobalDialog from "@/hooks/useGlobalDialog";
 import TaskIntervalForm from "@/components/task-intervals/TaskIntervalForm";
 import { Row } from "@tanstack/react-table";
 import { findModelPrimaryKeyField } from "@/utils/utilities";
+import TaskIntervalSingleColumn from "@/components/task-intervals/TaskIntervalSingleColumn";
+import { useGenericMutation } from "@/hooks/useGenericMutation";
 
 const TaskIntervalTable = <T,>({
   tableStates,
@@ -98,12 +100,24 @@ const TaskIntervalTable = <T,>({
     "Add Form Templates": addTaskIntervalsFromTemplateMutation,
   }; 
   */
-  const modelActions = undefined;
+  
+  //This would produce the same shape as the modelActions above.
+  const modelActions = modelConfig.hooks.reduce((prev, cur) => {
+    const endPoint = `/${modelConfig.modelPath}/${cur.slug}/`;
+    return {
+      ...prev,
+      [cur.caption]: useGenericMutation({
+        endPoint,
+        onSuccess: (data) => refetchQuery(0),
+      }),
+    };
+  }, {});
 
   const { mutate: updateRecords, mutateAsync: asyncUpdateRecords } =
     useUpdateModelsMutation(modelConfig);
   const rowActions = undefined;
   /* 
+  Run WriteToGetmodelrowaction_tsx - getModelRowAction.tsx
   const rowActions = getTaskIntervalRowActions({
     currentData,
     setCurrentData,
@@ -113,6 +127,7 @@ const TaskIntervalTable = <T,>({
 
   const columnsToBeOverriden = undefined;
   /* 
+  Run WriteToGetmodelcolumnstobeoverriden_tsx - getModelColumnsToBeOverriden.tsx
   const columnsToBeOverriden = getTaskColumnsToBeOverriden<
     T,
     unknown
@@ -220,7 +235,7 @@ const TaskIntervalTable = <T,>({
     pageParams,
     rowActions,
     modelActions,
-    SingleColumnComponent: undefined,
+    SingleColumnComponent: TaskIntervalSingleColumn,
     requiredList,
     defaultFormValue,
     columnOrderToOverride,
