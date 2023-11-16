@@ -29,6 +29,7 @@ import TaskForm from "@/components/tasks/TaskForm";
 import { Row } from "@tanstack/react-table";
 import { findModelPrimaryKeyField } from "@/utils/utilities";
 import TaskSingleColumn from "@/components/tasks/TaskSingleColumn";
+import { useGenericMutation } from "@/hooks/useGenericMutation";
 
 const TaskTable = <T,>({
   tableStates,
@@ -103,7 +104,18 @@ const TaskTable = <T,>({
     "Add Form Templates": addTasksFromTemplateMutation,
   }; 
   */
-  const modelActions = undefined;
+
+  //This would produce the same shape as the modelActions above.
+  const modelActions = modelConfig.hooks.reduce((prev, cur) => {
+    const endPoint = `/${modelConfig.modelPath}/${cur.slug}/`;
+    return {
+      ...prev,
+      [cur.caption]: useGenericMutation({
+        endPoint,
+        onSuccess: (data) => refetchQuery(0),
+      }),
+    };
+  }, {});
 
   const { mutate: updateRecords, mutateAsync: asyncUpdateRecords } =
     useUpdateModelsMutation(modelConfig);
