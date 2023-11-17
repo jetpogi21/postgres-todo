@@ -68,7 +68,7 @@ const Sidebar: React.FC = () => {
                     <Link
                       href={"/" + modelPath!}
                       className={cn(
-                        "p-2 rounded-sm hover:bg-accent flex gap-4 items-center",
+                        "p-2 rounded-sm hover:bg-accent flex gap-4 items-center justify-center lg:justify-start",
                         {
                           "bg-accent":
                             modelPath === "/"
