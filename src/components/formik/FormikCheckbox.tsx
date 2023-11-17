@@ -74,7 +74,7 @@ const FormikCheckbox = forwardRef<any, FormikCheckboxProps>(
     return (
       <div
         className={cn(
-          "flex gap-1.5 items-center justify-center",
+          "flex gap-1.5 items-center justify-start",
           containerClassNames
         )}
         style={style}

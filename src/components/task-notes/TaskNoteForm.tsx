@@ -258,10 +258,27 @@ const TaskNoteForm: React.FC<TaskNoteFormProps> = (prop) => {
         <div className="flex flex-col flex-1 h-full gap-8 xl:flex-row">
           <div className="flex flex-col flex-1 gap-4">
             <div
+              /* className="grid xl:grid-cols-[repeat(9,1fr)_auto_auto_auto] gap-4" */
               className="grid grid-cols-12 gap-4"
               style={{
                 gridTemplateAreas: generateGridTemplateAreas(modelConfig),
               }}
+              /*
+              Overriding rows example
+              style={{
+                gridTemplateAreas: generateGridTemplateAreas(modelConfig, {
+                  overrideRow: isLarge
+                    ? {
+                        1: [
+                          ...fillArray(6, "taskCategoryID"),
+                          ...fillArray(6, "taskIntervalID"),
+                        ],
+                        2: [...fillArray(12, "isSuspended")],
+                        3: [...fillArray(12, "SubTaskTemplates")],
+                      }
+                    : {},
+                }),
+              */
             >
               <FormikFormControlGenerator
                 modelConfig={modelConfig}

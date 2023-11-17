@@ -35,7 +35,10 @@ import FormikSubformGenerator from "@/components/FormikSubformGenerator";
 import { getPrevURL } from "@/lib/getPrevURL";
 import { ModelDeleteDialog } from "@/components/ModelDeleteDialog";
 import ModelDropzonesForRelationships from "@/components/ModelDropzonesForRelationships";
-import { generateGridTemplateAreas } from "@/lib/generateGridTemplateAreas";
+import {
+  fillArray,
+  generateGridTemplateAreas,
+} from "@/lib/generateGridTemplateAreas";
 import { cn } from "@/lib/utils";
 import { getFirstAndLastFieldInForm } from "@/lib/getFirstAndLastFieldInForm";
 import useScreenSize from "@/hooks/useScreenSize";
@@ -258,9 +261,21 @@ const TaskTemplateForm: React.FC<TaskTemplateFormProps> = (prop) => {
         <div className="flex flex-col flex-1 h-full gap-8 xl:flex-row">
           <div className="flex flex-col flex-1 gap-4">
             <div
-              className="grid grid-cols-12 gap-4"
+              className="grid xl:grid-cols-[repeat(9,1fr)_auto_auto_auto] gap-4"
+              /* className="grid grid-cols-12 gap-4" */
               style={{
-                gridTemplateAreas: generateGridTemplateAreas(modelConfig),
+                gridTemplateAreas: generateGridTemplateAreas(modelConfig, {
+                  overrideRow: isLarge
+                    ? {
+                        1: [
+                          ...fillArray(6, "taskCategoryID"),
+                          ...fillArray(6, "taskIntervalID"),
+                        ],
+                        2: [...fillArray(12, "isSuspended")],
+                        3: [...fillArray(12, "SubTaskTemplates")],
+                      }
+                    : {},
+                }),
               }}
             >
               <FormikFormControlGenerator
@@ -295,19 +310,19 @@ const TaskTemplateForm: React.FC<TaskTemplateFormProps> = (prop) => {
                 ref={ref}
               />
               <FormikSubformGenerator
-              modelConfig={modelConfig}
-              formik={formik}
-              handleHasUdpate={handleHasUdpate}
-              /*
+                modelConfig={modelConfig}
+                formik={formik}
+                handleHasUdpate={handleHasUdpate}
+                /*
               Use to filter out the row data for pre-filtering records to be shown to the users
               filterFunction={{ TaskNote: (item) => !item.file }}
               */
-            />
-            <ModelDropzonesForRelationships
-              formik={formik}
-              handleHasUpdate={handleHasUdpate}
-              modelConfig={modelConfig}
-            />
+              />
+              <ModelDropzonesForRelationships
+                formik={formik}
+                handleHasUpdate={handleHasUdpate}
+                modelConfig={modelConfig}
+              />
             </div>
           </div>
         </div>
