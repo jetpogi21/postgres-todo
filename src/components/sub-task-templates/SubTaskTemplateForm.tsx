@@ -102,16 +102,14 @@ const SubTaskTemplateForm: React.FC<SubTaskTemplateFormProps> = (prop) => {
     initialData: prop.data,
   });
 
-  const subTaskTemplate =
-    modelQuery.data as SubTaskTemplateFormFormikInitialValues;
+  const subTaskTemplate = modelQuery.data as SubTaskTemplateFormFormikInitialValues;
 
   const isLarge = useScreenSize("lg");
-  const initialValues =
-    getInitialValues<SubTaskTemplateFormFormikInitialValues>(
-      modelConfig,
-      subTaskTemplate,
-      { requiredList, skipEmptyRow: isLarge }
-    );
+  const initialValues = getInitialValues<SubTaskTemplateFormFormikInitialValues>(
+    modelConfig,
+    subTaskTemplate,
+    { requiredList, skipEmptyRow: isLarge }
+  );
 
   const handleFocus = () => {
     ref && ref.current && ref.current.focus();
@@ -272,6 +270,7 @@ const SubTaskTemplateForm: React.FC<SubTaskTemplateFormProps> = (prop) => {
                   setHasUpdate: handleHasUdpate,
                   onChange: {
                     /*
+                    Adds onChange event for a specific control(s) in the form
                     finishDateTime: (newValue) => {
                       if (newValue) {
                         formik.setFieldValue("isFinished", true);
@@ -295,14 +294,13 @@ const SubTaskTemplateForm: React.FC<SubTaskTemplateFormProps> = (prop) => {
                 }}
                 ref={ref}
               />
-            </div>
-            <FormikSubformGenerator
+              <FormikSubformGenerator
               modelConfig={modelConfig}
               formik={formik}
               handleHasUdpate={handleHasUdpate}
               /*
-              //Get only the blank files from the original value
-                filterFunction={(item) => !item.file}
+              Use to filter out the row data for pre-filtering records to be shown to the users
+              filterFunction={{ TaskNote: (item) => !item.file }}
               */
             />
             <ModelDropzonesForRelationships
@@ -310,6 +308,7 @@ const SubTaskTemplateForm: React.FC<SubTaskTemplateFormProps> = (prop) => {
               handleHasUpdate={handleHasUdpate}
               modelConfig={modelConfig}
             />
+            </div>
           </div>
         </div>
         <div className={cn("flex gap-2 mt-auto", modalFormProps && "pt-8")}>

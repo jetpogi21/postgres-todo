@@ -48,7 +48,7 @@ interface ModelSubformProps<T> {
   formik: FormikProps<T>;
   setHasUpdate: () => void;
   relationshipConfig: (typeof AppConfig)["relationships"][number];
-  filterFunction?: (item: Record<string, unknown>) => boolean;
+  filterFunction?: Record<string, (item: Record<string, unknown>) => boolean>;
   columnOrderToOverride?: [string, number][];
   columnsToBeOverriden?: ColumnsToBeOverriden<T, unknown>;
 }
@@ -87,7 +87,7 @@ const ModelSubform = <T,>({
   const rows = useMemo(
     () =>
       (formik.values[pluralizedModelName as keyof T] as ArrayOfObject).filter(
-        filterFunction || Boolean
+        filterFunction?.[modelConfig.modelName] || Boolean
       ) as ArrayOfObject,
     [formik.values[pluralizedModelName as keyof T], filterFunction]
   );

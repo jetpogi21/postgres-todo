@@ -1,4 +1,5 @@
 import { ModelConfig } from "@/interfaces/ModelConfig";
+import { deleteItemByIndex } from "@/lib/deleteItemByIndex";
 import { getChildModels } from "@/lib/getChildModels";
 import { getChildModelsWithDropzone } from "@/lib/getChildModelsWithDropzone";
 import { getChildModelsWithSimpleRelationship } from "@/lib/getChildModelsWithSimpleRelationship";
@@ -11,9 +12,13 @@ interface OverrideRowProp {
 
 export const generateGridTemplateAreas = (
   modelConfig: ModelConfig,
-  overrideRow?: OverrideRowProp
+  options?: {
+    overrideRow?: OverrideRowProp;
+    rowsToDelete?: number[];
+  }
 ) => {
-  const rows: string[][] = [];
+  const { overrideRow, rowsToDelete } = options || {};
+  let rows: string[][] = [];
   const fields = getSortedFormikFormControlFields(modelConfig);
 
   let row: string[] = [];
@@ -72,6 +77,12 @@ export const generateGridTemplateAreas = (
 
   for (const key in overrideRow) {
     rows[+key] = overrideRow[+key];
+  }
+
+  if (rowsToDelete) {
+    for (const idx of rowsToDelete) {
+      rows = deleteItemByIndex(rows, idx);
+    }
   }
 
   return `${rows.map((row) => `"${row.join(" ")}"`).join(" ")}`;

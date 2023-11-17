@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/Button";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import { toast } from "@/hooks/use-toast";
 import { Trash } from "lucide-react";
-import { findModelPrimaryKeyField } from "@/utils/utilities";
+import { findModelPrimaryKeyField, toValidDateTime } from "@/utils/utilities";
 import { TaskConfig } from "@/utils/config/TaskConfig";
 import { mapOriginalSimpleModels } from "@/lib/mapOriginalSimpleModels";
 import { createRequiredModelLists } from "@/lib/createRequiredModelLists";
@@ -35,7 +35,10 @@ import FormikSubformGenerator from "@/components/FormikSubformGenerator";
 import { getPrevURL } from "@/lib/getPrevURL";
 import { ModelDeleteDialog } from "@/components/ModelDeleteDialog";
 import ModelDropzonesForRelationships from "@/components/ModelDropzonesForRelationships";
-import { generateGridTemplateAreas } from "@/lib/generateGridTemplateAreas";
+import {
+  fillArray,
+  generateGridTemplateAreas,
+} from "@/lib/generateGridTemplateAreas";
 import { cn } from "@/lib/utils";
 import { getFirstAndLastFieldInForm } from "@/lib/getFirstAndLastFieldInForm";
 import useScreenSize from "@/hooks/useScreenSize";
@@ -135,11 +138,9 @@ const TaskForm: React.FC<TaskFormProps> = (prop) => {
 
     const goToNewRecord = () => {
       formik.setValues(
-        getInitialValues<TaskFormFormikInitialValues>(
-          modelConfig,
-          undefined,
-          { requiredList }
-        )
+        getInitialValues<TaskFormFormikInitialValues>(modelConfig, undefined, {
+          requiredList,
+        })
       );
       if (!modalFormProps) {
         window.history.pushState(
@@ -242,9 +243,7 @@ const TaskForm: React.FC<TaskFormProps> = (prop) => {
     }
   };
 
-  const renderFormik = (
-    formik: FormikProps<TaskFormFormikInitialValues>
-  ) => {
+  const renderFormik = (formik: FormikProps<TaskFormFormikInitialValues>) => {
     const handleSubmitClick: MouseEventHandler = (e) => {
       e.preventDefault();
       formik.submitForm();
@@ -258,9 +257,19 @@ const TaskForm: React.FC<TaskFormProps> = (prop) => {
         <div className="flex flex-col flex-1 h-full gap-8 xl:flex-row">
           <div className="flex flex-col flex-1 gap-4">
             <div
-              className="grid grid-cols-12 gap-4"
+              className="grid gap-4 gird-cols-12"
               style={{
-                gridTemplateAreas: generateGridTemplateAreas(modelConfig),
+                gridTemplateAreas: generateGridTemplateAreas(modelConfig, {
+                  overrideRow: isLarge
+                    ? {
+                        3: [
+                          ...fillArray(6, "finishDateTime"),
+                          ...fillArray(6, "isFinished"),
+                        ],
+                      }
+                    : {},
+                  rowsToDelete: [-1],
+                }),
               }}
             >
               <FormikFormControlGenerator
@@ -269,7 +278,7 @@ const TaskForm: React.FC<TaskFormProps> = (prop) => {
                   requiredList,
                   setHasUpdate: handleHasUdpate,
                   onChange: {
-                    /*
+                    /* 
                     finishDateTime: (newValue) => {
                       if (newValue) {
                         formik.setFieldValue("isFinished", true);
@@ -287,22 +296,42 @@ const TaskForm: React.FC<TaskFormProps> = (prop) => {
                         formik.setFieldValue("finishDateTime", "");
                       }
                     },
-                    */
+                     */
+                    finishDateTime: (newValue) => {
+                      if (newValue) {
+                        formik.setFieldValue("isFinished", true);
+                      } else {
+                        formik.setFieldValue("isFinished", false);
+                      }
+                    },
+                    isFinished: (newValue) => {
+                      if (newValue) {
+                        formik.setFieldValue(
+                          "finishDateTime",
+                          toValidDateTime(new Date())
+                        );
+                      } else {
+                        formik.setFieldValue("finishDateTime", "");
+                      }
+                    },
                   },
                   hiddenField,
                 }}
                 ref={ref}
               />
-            </div>
-            <FormikSubformGenerator
-              modelConfig={modelConfig}
-              formik={formik}
-              handleHasUdpate={handleHasUdpate}
-              /*
-              //Get only the blank files from the original value
+              <FormikSubformGenerator
+                modelConfig={modelConfig}
+                formik={formik}
+                handleHasUdpate={handleHasUdpate}
+                /*
+                Use to filter out the row data for pre-filtering records to be shown to the users
                 filterFunction={(item) => !item.file}
-              */
-            />
+                */
+                filterFunction={{ TaskNote: (item) => !item.file }}
+              />
+            </div>
+          </div>
+          <div className="xl:w-[600px]">
             <ModelDropzonesForRelationships
               formik={formik}
               handleHasUpdate={handleHasUdpate}

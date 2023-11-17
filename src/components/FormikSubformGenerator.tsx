@@ -11,7 +11,7 @@ type FormikSubformGeneratorProps<T> = {
   modelConfig: ModelConfig;
   formik: FormikProps<T>;
   handleHasUdpate: () => void;
-  filterFunction?: (item: Record<string, unknown>) => boolean;
+  filterFunction?: Record<string, (item: Record<string, unknown>) => boolean>;
 };
 
 const FormikSubformGenerator = <T,>({
