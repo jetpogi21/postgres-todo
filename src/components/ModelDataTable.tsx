@@ -160,7 +160,9 @@ const ModelDataTable = <T, U, V>({
   const sorting = getSorting(sort);
   const hasSelected = Object.values(rowSelection).some((val) => val);
   const dataRowCount = data
-    ? currentData.length + (page - 1) * forceCastToNumber(limit)
+    ? //@ts-ignore
+      currentData.filter((item) => item[primaryKeyFieldName]).length +
+      (page - 1) * forceCastToNumber(limit)
     : 0;
   const pageStatus = `Showing ${dataRowCount} of ${recordCount} record(s)`;
   const hasPreviousPage = page > 1;
