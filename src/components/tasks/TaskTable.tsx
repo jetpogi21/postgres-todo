@@ -32,6 +32,7 @@ import TaskSingleColumn from "@/components/tasks/TaskSingleColumn";
 import { useGenericMutation } from "@/hooks/useGenericMutation";
 import { getTaskRowActions } from "@/lib/tasks/getTaskRowActions";
 import { getTaskColumnsToBeOverriden } from "@/lib/tasks/getTaskColumnsToBeOverriden";
+import { getGenericMutationEndpoint } from "@/lib/getGenericMutationEndpoint";
 
 const TaskTable = <T,>({
   tableStates,
@@ -98,26 +99,25 @@ const TaskTable = <T,>({
 
   //Add any required mutations here
   /* 
-  const addTasksFromTemplateMutation =
-    useImportTaskFromTemplate((data) => {
-      refetchQuery(0);
-    });
+  const addTaskTemplatesFromTemplateMutation = useGenericMutation({
+    endPoint: getGenericMutationEndpoint(modelConfig, "Add From Templates"),
+    onSuccess: (data) => refetchQuery(0),
+  });
+
   const modelActions = {
-    "Add Form Templates": addTasksFromTemplateMutation,
-  }; 
+    "Add Form Templates": addTaskTemplatesFromTemplateMutation,
+  };
   */
 
   //This would produce the same shape as the modelActions above.
-  const modelActions = modelConfig.hooks.reduce((prev, cur) => {
-    const endPoint = `/${modelConfig.modelPath}/${cur.slug}/`;
-    return {
-      ...prev,
-      [cur.caption]: useGenericMutation({
-        endPoint,
-        onSuccess: (data) => refetchQuery(0),
-      }),
-    };
-  }, {});
+  const addTaskTemplatesFromTemplateMutation = useGenericMutation({
+    endPoint: getGenericMutationEndpoint(modelConfig, "Add From Templates"),
+    onSuccess: (data) => refetchQuery(0),
+  });
+
+  const modelActions = {
+    "Add Form Templates": addTaskTemplatesFromTemplateMutation,
+  };
 
   const { mutate: updateRecords, mutateAsync: asyncUpdateRecords } =
     useUpdateModelsMutation(modelConfig);

@@ -26,6 +26,7 @@ import { Row } from "@tanstack/react-table";
 import { findModelPrimaryKeyField } from "@/utils/utilities";
 import TaskIntervalSingleColumn from "@/components/task-intervals/TaskIntervalSingleColumn";
 import { useGenericMutation } from "@/hooks/useGenericMutation";
+import { getGenericMutationEndpoint } from "@/lib/getGenericMutationEndpoint";
 
 const TaskIntervalTable = <T,>({
   tableStates,
@@ -92,26 +93,18 @@ const TaskIntervalTable = <T,>({
 
   //Add any required mutations here
   /* 
-  const addTaskIntervalsFromTemplateMutation =
-    useImportTaskIntervalFromTemplate((data) => {
-      refetchQuery(0);
-    });
+  const addTaskTemplatesFromTemplateMutation = useGenericMutation({
+    endPoint: getGenericMutationEndpoint(modelConfig, "Add From Templates"),
+    onSuccess: (data) => refetchQuery(0),
+  });
+
   const modelActions = {
-    "Add Form Templates": addTaskIntervalsFromTemplateMutation,
-  }; 
+    "Add Form Templates": addTaskTemplatesFromTemplateMutation,
+  };
   */
   
   //This would produce the same shape as the modelActions above.
-  const modelActions = modelConfig.hooks.reduce((prev, cur) => {
-    const endPoint = `/${modelConfig.modelPath}/${cur.slug}/`;
-    return {
-      ...prev,
-      [cur.caption]: useGenericMutation({
-        endPoint,
-        onSuccess: (data) => refetchQuery(0),
-      }),
-    };
-  }, {});
+  const modelActions = undefined;
 
   const { mutate: updateRecords, mutateAsync: asyncUpdateRecords } =
     useUpdateModelsMutation(modelConfig);
