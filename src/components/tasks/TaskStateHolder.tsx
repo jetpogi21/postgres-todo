@@ -4,14 +4,10 @@ import TaskFilterForm from "@/components/tasks/TaskFilterForm";
 import TaskTable from "@/components/tasks/TaskTable";
 import { useTableProps } from "@/hooks/useTableProps";
 import { ModelConfig } from "@/interfaces/ModelConfig";
-import TaskModel from "@/models/TaskModel";
+import { TaskModel } from "@/interfaces/TaskInterfaces";
 import React from "react";
 
-const TaskStateHolder = ({
-  modelConfig,
-}: {
-  modelConfig: ModelConfig;
-}) => {
+const TaskStateHolder = ({ modelConfig }: { modelConfig: ModelConfig }) => {
   const tableStates = useTableProps<TaskModel>(modelConfig);
   return (
     <>
